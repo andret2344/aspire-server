@@ -1,0 +1,44 @@
+name: CI (build & test)
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+env:
+  PHP_VERSION: "8.4"
+  COMPOSER_CACHE_DIR: ~/.cache/composer
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.COMPOSER_CACHE_DIR }}
+          key: composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: Composer install (dev)
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Symfony cache warmup (dev)
+        env:
+          APP_ENV: dev
+          APP_DEBUG: 1
+        run: |
+          php bin/console cache:clear --env=dev --no-warmup || true
+          php bin/console cache:warmup --env=dev || true
+
+      - name: PHPUnit
+        run: vendor/bin/phpunit --no-coverage

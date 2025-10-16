@@ -1,0 +1,7 @@
+gesdinet_jwt_refresh_token:
+  ttl: 1209600 # 2 weeks
+  user_provider: security.user.provider.concrete.app_user_provider
+  refresh_token_class: App\Entity\RefreshToken
+  single_use: true
+  token_parameter_name: refresh_token
+  firewall: api

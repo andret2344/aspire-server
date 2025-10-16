@@ -1,0 +1,395 @@
+#file: noinspection YAMLSchemaValidation
+nelmio_api_doc:
+  documentation:
+    openapi: 3.1.0
+    info:
+      title: Aspire API
+      version: 1.0.0
+      description: REST API for Aspire
+    servers:
+      - { url: / }
+    components:
+      securitySchemes:
+        BearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+      schemas:
+        WishListItemOwner:
+          type: object
+          properties:
+            id: { type: integer, example: 123 }
+            name: { type: string, example: "Super item" }
+            description: { type: string, example: "Super item's description" }
+            priority_id: { type: integer, example: 2 }
+            hidden: { type: boolean, example: false }
+        WishListItemVisitor:
+          type: object
+          properties:
+            id: { type: integer, example: 123 }
+            name: { type: string, example: "Super item" }
+            description: { type: string, example: "Super item's description" }
+            priority_id: { type: integer, example: 2 }
+        WishListOwner:
+          type: object
+          properties:
+            id: { type: integer, example: 42 }
+            uuid: { type: string, example: 'ce95df0f-ca7d-4be4-9418-3ddce1a2d366' }
+            name: { type: string, example: 'My super wishlist' }
+            wishlist_items:
+              type: array
+              items:
+                $ref: '#/components/schemas/WishListItemOwner'
+            has_password: { type: boolean, example: true }
+        WishListVisitor:
+          type: object
+          properties:
+            id: { type: integer, example: 42 }
+            uuid: { type: string, example: 'ce95df0f-ca7d-4be4-9418-3ddce1a2d366' }
+            name: { type: string, example: 'My super wishlist' }
+            wishlist_items:
+              type: array
+              items:
+                $ref: '#/components/schemas/WishListItemVisitor'
+            has_password: { type: boolean, example: true }
+        WishListEmpty:
+          type: object
+          properties:
+            id: { type: integer, example: 42 }
+            uuid: { type: string, example: 'ce95df0f-ca7d-4be4-9418-3ddce1a2d366' }
+            name: { type: string, example: 'My super wishlist' }
+            wishlist_items: { type: array, items: [ ] }
+            has_password: { type: boolean, example: false }
+    security:
+      - BearerAuth: [ ]
+
+    paths:
+      /api/account/login:
+        post:
+          tags: [ Auth ]
+          summary: Login (JWT)
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ email, password ]
+                  properties:
+                    email: { type: string, format: email, example: 'user@example.com' }
+                    password: { type: string, format: password, example: '53cr37p455' }
+          responses:
+            '200':
+              description: OK
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token: { type: string }
+                      refresh_token: { type: string }
+          security: [ ]
+
+      /api/account/token/refresh:
+        post:
+          tags: [ Auth ]
+          summary: Refresh token
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ refresh_token ]
+                  properties:
+                    refresh_token: { type: string }
+          responses:
+            '200':
+              description: OK
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token: { type: string }
+                      refresh_token: { type: string }
+          security: [ ]
+
+      /api/account/register:
+        post:
+          tags: [ Auth ]
+          summary: Register new account
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ email, password ]
+                  properties:
+                    email: { type: string, format: email, example: 'new.user@example.com' }
+                    password: { type: string, minLength: 8, example: 'P@ssw0rd!' }
+          responses:
+            '201':
+              description: Created (optionally returns tokens)
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      token: { type: string, example: 'eyJhbGciOiJIUzI1NiIsInR5cCI...' }
+                      refresh_token: { type: string, example: 'def50200a1b2...' }
+            '400': { description: Bad Request }
+            '409': { description: Email already in use }
+          security: [ ]
+
+      /api/account/change_password:
+        post:
+          tags: [ Auth ]
+          summary: Change password (requires authentication)
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ old_password, new_password, new_password_confirmation ]
+                  properties:
+                    old_password: { type: string, example: 'OldP@ssw0rd' }
+                    new_password: { type: string, minLength: 8, example: 'NewP@ssw0rd!' }
+                    new_password_confirmation: { type: string, minLength: 8, example: 'NewP@ssw0rd!' }
+          responses:
+            '200': { description: Password changed }
+            '400': { description: Bad Request }
+            '401': { description: Unauthorized }
+
+      /api/account/password_reset:
+        post:
+          tags: [ Auth ]
+          summary: Start password reset (always 200)
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ email, url ]
+                  properties:
+                    email: { type: string, format: email, example: 'user@example.com' }
+                    url: { type: string, format: uri, example: 'https://app.example.com/reset?token={token}' }
+          responses:
+            '200': { description: OK }
+          security: [ ]
+
+      /api/account/password_reset/confirm:
+        post:
+          tags: [ Auth ]
+          summary: Confirm password reset
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ token, password, password_confirmation ]
+                  properties:
+                    token: { type: string, example: 'reset-token-from-email' }
+                    password: { type: string, minLength: 8, example: 'NewP@ssw0rd!' }
+                    password_confirmation: { type: string, minLength: 8, example: 'NewP@ssw0rd!' }
+          responses:
+            '200': { description: Password reset successfully }
+            '400': { description: Bad Request }
+          security: [ ]
+
+      /wishlists/self:
+        get:
+          tags: [ Wishlists ]
+          summary: List user wishlists
+          description: Retrieves all wishlists of the logged in user including hidden items.
+          responses:
+            '200':
+              description: List of wishlists
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WishListOwner'
+      /wishlists:
+        post:
+          tags: [ Wishlists ]
+          summary: Create wishlist
+          description: Creates a wishlist with a given name. The wishlist has no password nor items.
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ name ]
+                  properties:
+                    name: { type: string, example: 'My super wishlist' }
+          responses:
+            '201':
+              description: Created
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/WishListEmpty'
+            '400': { description: Bad Request }
+
+      /wishlists/{id}:
+        get:
+          tags: [ Wishlists ]
+          summary: Get wishlist by id
+          description: Retrieves a wishlist for the given id owned by the logged in user including hidden items.
+          parameters:
+            - { name: id, in: path, required: true, schema: { type: integer }, example: 42 }
+          responses:
+            '200':
+              description: Wishlist
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/WishListOwner'
+            '404': { description: Not found }
+        put:
+          tags: [ Wishlists ]
+          summary: Update wishlist
+          description: Updates the wishlist setting its name to a new value.
+          parameters:
+            - { name: id, in: path, required: true, schema: { type: integer }, example: 42 }
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    name: { type: string, example: 'Not so super wish list' }
+          responses:
+            '200': { description: Updated }
+            '400': { description: Bad Request }
+            '404': { description: Not found }
+        delete:
+          tags: [ Wishlists ]
+          summary: Delete wishlist
+          description: Deletes a given wishlist by its owner.
+          parameters:
+            - { name: id, in: path, required: true, schema: { type: integer }, example: 42 }
+          responses:
+            '200': { description: Deleted }
+            '404': { description: Not found }
+
+      /wishlists/{id}/set-access-code:
+        post:
+          tags: [ Wishlists ]
+          summary: Set or clear access code for read-only sharing
+          description: |
+            Sets the wishlist's access code for hiding items. Sending an empty string or `null` clears the access code
+            and unhides all the hidden items.
+          parameters:
+            - { name: id, in: path, required: true, schema: { type: integer }, example: 42 }
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [ enabled ]
+                  properties:
+                    access_code: { type: string, nullable: true, example: 'mysecretpass' }
+          responses:
+            '200':
+              description: OK
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                      message: { type: string, example: 'Access code set successfully' }
+            '400': { description: Bad Request }
+            '404': { description: Not found }
+
+      /wishlists/{wishlistId}/items:
+        get:
+          tags: [ Wishlist Items ]
+          summary: List items for wishlist
+          description: Retrieves all the items of the given wishlist of its owner, including hidden items.
+          parameters:
+            - { name: wishlistId, in: path, required: true, schema: { type: integer }, example: 42 }
+          responses:
+            '200':
+              description: List of items
+              content:
+                application/json:
+                  schema:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WishListItemOwner'
+            '404': { description: Not found }
+        post:
+          tags: [ Wishlist Items ]
+          summary: Create new item
+          description: Creates a new item with given values in the owner's wishlist.
+          parameters:
+            - { name: wishlistId, in: path, required: true, schema: { type: integer }, example: 42 }
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/WishListItemOwner'
+          responses:
+            '201': { description: Created }
+            '400': { description: Bad Request }
+            '404': { description: Not found }
+
+      /wishlists/{wishlistId}/items/{id}:
+        get:
+          tags: [ Wishlist Items ]
+          summary: Get item by id
+          description: Gets a single item of the given wishlist by its owner.
+          parameters:
+            - { name: wishlistId, in: path, required: true, schema: { type: integer }, example: 42 }
+            - { name: id, in: path, required: true, schema: { type: integer }, example: 123 }
+          responses:
+            '200':
+              description: Item details
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/WishListItemOwner'
+            '404': { description: Not found }
+        put:
+          tags: [ Wishlist Items ]
+          summary: Update item
+          description: Updates a wishlist item with the given values.
+          parameters:
+            - { name: wishlistId, in: path, required: true, schema: { type: integer }, example: 42 }
+            - { name: id, in: path, required: true, schema: { type: integer }, example: 123 }
+          requestBody:
+            required: true
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/WishListItemOwner'
+          responses:
+            '200': { description: Updated }
+            '400': { description: Bad Request }
+            '404': { description: Not found }
+        delete:
+          tags: [ Wishlist Items ]
+          summary: Delete item
+          description: Deletes the given item by the wishlist's owner.
+          parameters:
+            - { name: wishlistId, in: path, required: true, schema: { type: integer }, example: 42 }
+            - { name: id, in: path, required: true, schema: { type: integer }, example: 123 }
+          responses:
+            '200': { description: Deleted }
+            '404': { description: Not found }
+
+  areas:
+    default:
+      path_patterns:
+        - ^/empty

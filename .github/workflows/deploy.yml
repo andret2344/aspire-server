@@ -1,0 +1,83 @@
+name: Deploy (on tag -> GHCR)
+
+on:
+  push:
+    tags: [ "v*" ]
+
+env:
+  PHP_VERSION: "8.4"
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  DOCKER_BUILDKIT: "1"
+  COMPOSER_CACHE_DIR: ~/.cache/composer
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build_push_from_tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, pdo_mysql, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.COMPOSER_CACHE_DIR }}
+          key: composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: Composer install (no-dev)
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Symfony cache warmup (prod)
+        env:
+          APP_ENV: prod
+          APP_DEBUG: 0
+          # Dodaj wymagane sekrety, jeśli są potrzebne do warmupu (np. APP_SECRET, DATABASE_URL)
+          # APP_SECRET: ${{ secrets.APP_SECRET }}
+          # DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          php bin/console cache:clear --env=prod --no-warmup
+          php bin/console cache:warmup --env=prod
+
+      - name: Przygotuj artifact (runtime payload)
+        run: |
+          rm -rf artifact
+          mkdir -p artifact
+          rsync -a \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="tests" \
+            --exclude="node_modules" \
+            --exclude=".env.local" \
+            --exclude="docker" \
+            --exclude="artifact" \
+            ./ artifact/
+          rsync -a vendor/ artifact/vendor/
+          mkdir -p artifact/var && rsync -a var/cache/ artifact/var/cache/
+
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
