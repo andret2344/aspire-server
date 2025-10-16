@@ -9,6 +9,7 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
   DOCKER_BUILDKIT: "1"
   COMPOSER_CACHE_DIR: ~/.cache/composer
+  SYMFONY_SKIP_AUTO_SCRIPTS: 1
 
 permissions:
   contents: read
