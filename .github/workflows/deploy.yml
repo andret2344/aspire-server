@@ -6,7 +6,7 @@ on:
 
 env:
   PHP_VERSION: "8.4"
-  IMAGE_NAME: ${{ toLower(format('ghcr.io/{0}', github.repository)) }}
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
   DOCKER_BUILDKIT: "1"
   COMPOSER_CACHE_DIR: ~/.cache/composer
 
