@@ -48,6 +48,22 @@ jobs:
           php bin/console cache:clear --no-warmup
           php bin/console cache:warmup
 
+      - name: Prepare artifact (runtime payload)
+        run: |
+          rm -rf artifact
+          mkdir -p artifact
+          rsync -a \
+            --exclude=".git" \
+            --exclude=".github" \
+            --exclude="tests" \
+            --exclude="node_modules" \
+            --exclude="artifact" \
+            --exclude="docker" \
+            --exclude=".env.local" \
+            ./ artifact/
+          rsync -a vendor/ artifact/vendor/
+          mkdir -p artifact/var && rsync -a var/cache/ artifact/var/cache/
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
