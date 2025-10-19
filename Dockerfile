@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.4-fpm-alpine
 
 # system + ext
 RUN set -eux; \
@@ -20,17 +20,22 @@ WORKDIR /var/www/html
 # >>> CI ma wgrać gotowe pliki tutaj (vendor, public, var/cache/prod, itd.)
 COPY artifact/ /var/www/html/
 
+# Nginx i katalogi tymczasowe + prawa dla php-fpm (www-data) do var/
+RUN set -eux; \
+    mkdir -p /run/nginx \
+             /var/lib/nginx/tmp/client_body \
+             /var/lib/nginx/tmp/proxy \
+             /var/lib/nginx/tmp/fastcgi \
+             /var/log/nginx; \
+    chown -R nginx:nginx /run/nginx /var/lib/nginx /var/log/nginx; \
+    mkdir -p /var/www/html/var; \
+    chown -R www-data:www-data /var/www/html/var
+
 # konfiguracja
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 
-# uprawnienia
-RUN adduser -D -u 1000 app && \
-    mkdir -p /run/nginx && \
-    chown -R app:app /var/www/html /run/nginx
-
-USER app
-
+# NIE ustawiamy USER — master nginx i supervisord działają jako root (workery nginx spadną do usera `nginx`)
 EXPOSE 8083
 
 # healthcheck (nginx -> php -> symfony)
