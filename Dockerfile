@@ -17,13 +17,6 @@ WORKDIR /var/www/html
 
 COPY . /var/www/html/
 
-# ===== DEBUG: upewnij się, że .env trafił do obrazu =====
-RUN set -eux; \
-    ls -la /var/www/html | sed -n '1,200p'; \
-    test -f /var/www/html/.env || (echo "ERROR: .env not found in image" && exit 1); \
-    php -r "echo 'PHP sees .env: '; var_dump(is_file('/var/www/html/.env'), is_readable('/var/www/html/.env'));"
-# =========================================================
-
 RUN set -eux; \
     mkdir -p /run/nginx \
              /var/lib/nginx/tmp/client_body \
