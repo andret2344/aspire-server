@@ -1,4 +1,4 @@
-name: Deploy (on tag -> GHCR)
+name: Deploy tag version
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 env:
   PHP_VERSION: "8.4"
   IMAGE_NAME: ghcr.io/${{ github.repository }}
-  DOCKER_BUILDKIT: "1"
   COMPOSER_CACHE_DIR: ~/.cache/composer
 
 permissions:
@@ -37,18 +36,13 @@ jobs:
           path: ${{ env.COMPOSER_CACHE_DIR }}
           key: composer-${{ hashFiles('**/composer.lock') }}
 
-      - name: Install dependencies (prod, no auto-scripts)
-        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --no-scripts
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Symfony cache warmup (prod)
-        env:
-          APP_ENV: prod
-          APP_DEBUG: 0
-        run: |
-          php bin/console cache:clear --no-warmup
-          php bin/console cache:warmup
+      - name: Symfony cache warmup
+        run: php bin/console cache:clear
 
-      - name: Prepare artifact (runtime payload)
+      - name: Prepare artifact
         run: |
           rm -rf artifact
           mkdir -p artifact
@@ -64,7 +58,7 @@ jobs:
           rsync -a vendor/ artifact/vendor/
           mkdir -p artifact/var && rsync -a var/cache/ artifact/var/cache/
 
-      - name: Upload build artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-artifact
@@ -81,12 +75,6 @@ jobs:
         with:
           name: build-artifact
           path: artifact
-
-      - name: Test for `.env`
-        run: ls -laF
-
-      - name: Test for `.env` again
-        run: ls -laF artifact
 
       - name: Login to GHCR
         uses: docker/login-action@v3

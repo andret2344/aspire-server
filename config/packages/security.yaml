@@ -47,9 +47,10 @@ security:
     - { path: ^/account/token/refresh$, roles: PUBLIC_ACCESS }
     - { path: ^/account/register$, roles: PUBLIC_ACCESS }
     - { path: ^/account/password_reset, roles: PUBLIC_ACCESS }
-    - { path: ^/account/docs$, roles: PUBLIC_ACCESS }
-    - { path: ^/account/doc\.json$, roles: PUBLIC_ACCESS }
     - { path: ^/wishlists$, methods: [ GET, OPTIONS ], roles: PUBLIC_ACCESS }
+    # Swagger
+    - { path: ^/api/docs$, roles: PUBLIC_ACCESS }
+    - { path: ^/api/doc\.json$, roles: PUBLIC_ACCESS }
     # Authorized access
     - { path: ^/wishlists, roles: IS_AUTHENTICATED_FULLY }
     - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
