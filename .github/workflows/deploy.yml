@@ -49,9 +49,6 @@ jobs:
           php bin/console cache:clear --no-warmup
           php bin/console cache:warmup
 
-      - name: Test for `.env`
-        run: ls -laF
-
       - name: Prepare artifact (runtime payload)
         run: |
           rm -rf artifact
@@ -67,9 +64,6 @@ jobs:
             ./ artifact/
           rsync -a vendor/ artifact/vendor/
           mkdir -p artifact/var && rsync -a var/cache/ artifact/var/cache/
-
-      - name: Test for `.env` again
-        run: ls -laF artifact && test -f artifact/.env
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -88,6 +82,12 @@ jobs:
         with:
           name: build-artifact
           path: artifact
+
+      - name: Test for `.env`
+        run: ls -laF
+
+      - name: Test for `.env` again
+        run: ls -laF artifact
 
       - name: Login to GHCR
         uses: docker/login-action@v3
