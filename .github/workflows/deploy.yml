@@ -3,6 +3,7 @@ name: Deploy (on tag -> GHCR)
 on:
   push:
     tags: [ "v*" ]
+    branches: [ "main" ]
 
 env:
   PHP_VERSION: "8.4"
@@ -48,6 +49,9 @@ jobs:
           php bin/console cache:clear --no-warmup
           php bin/console cache:warmup
 
+      - name: Test for `.env`
+        run: ls -laF
+
       - name: Prepare artifact (runtime payload)
         run: |
           rm -rf artifact
@@ -63,6 +67,9 @@ jobs:
             ./ artifact/
           rsync -a vendor/ artifact/vendor/
           mkdir -p artifact/var && rsync -a var/cache/ artifact/var/cache/
+
+      - name: Test for `.env` again
+        run: ls -laF artifact && test -f artifact/.env
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
