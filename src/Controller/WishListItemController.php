@@ -61,7 +61,7 @@ final class WishListItemController extends AbstractController
 
 		$name = trim((string)($data['name'] ?? ''));
 		$description = (string)($data['description'] ?? '');
-		$priority = (int)($data['priority_id'] ?? 1);
+		$priority = (int)($data['priority'] ?? 1);
 		$hidden = (bool)($data['hidden'] ?? false);
 
 		/** @var User $user */
@@ -109,7 +109,7 @@ final class WishListItemController extends AbstractController
 
 		$name = array_key_exists('name', $data) ? (string)$data['name'] : null;
 		$description = array_key_exists('description', $data) ? (string)$data['description'] : null;
-		$priority = array_key_exists('priority_id', $data) ? (int)$data['priority_id'] : null;
+		$priority = array_key_exists('priority', $data) ? (int)$data['priority'] : null;
 		$hidden = array_key_exists('hidden', $data) ? (bool)$data['hidden'] : null;
 
 		try {

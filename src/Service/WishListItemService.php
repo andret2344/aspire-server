@@ -33,7 +33,7 @@ final readonly class WishListItemService
 			throw new InvalidArgumentException('Field "name" is required');
 		}
 		if ($priority < 1 || $priority > 5) {
-			throw new InvalidArgumentException('priority_id must be between 1 and 5');
+			throw new InvalidArgumentException('priority must be between 1 and 5');
 		}
 		if ($hidden && !$wishList->hasPassword()) {
 			throw new DomainException('Wishlist must have an access code to allow hidden items.');
@@ -66,7 +66,7 @@ final readonly class WishListItemService
 
 		if ($priority !== null) {
 			if ($priority < 1 || $priority > 5) {
-				throw new InvalidArgumentException('priority_id must be between 1 and 5');
+				throw new InvalidArgumentException('priority must be between 1 and 5');
 			}
 			$item->setPriority($priority);
 		}

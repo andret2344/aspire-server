@@ -21,7 +21,7 @@ nelmio_api_doc:
             id: { type: integer, example: 123 }
             name: { type: string, example: "Super item" }
             description: { type: string, example: "Super item's description" }
-            priority_id: { type: integer, example: 2 }
+            priority: { type: integer, example: 2 }
             hidden: { type: boolean, example: false }
         WishListItemVisitor:
           type: object
@@ -29,7 +29,7 @@ nelmio_api_doc:
             id: { type: integer, example: 123 }
             name: { type: string, example: "Super item" }
             description: { type: string, example: "Super item's description" }
-            priority_id: { type: integer, example: 2 }
+            priority: { type: integer, example: 2 }
         WishListOwner:
           type: object
           properties:
