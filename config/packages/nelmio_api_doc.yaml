@@ -64,7 +64,7 @@ nelmio_api_doc:
       - BearerAuth: [ ]
 
     paths:
-      /api/account/login:
+      /account/login:
         post:
           tags: [ Auth ]
           summary: Login (JWT)
@@ -90,7 +90,7 @@ nelmio_api_doc:
                       refresh_token: { type: string }
           security: [ ]
 
-      /api/account/token/refresh:
+      /account/token/refresh:
         post:
           tags: [ Auth ]
           summary: Refresh token
@@ -115,7 +115,7 @@ nelmio_api_doc:
                       refresh_token: { type: string }
           security: [ ]
 
-      /api/account/register:
+      /account/register:
         post:
           tags: [ Auth ]
           summary: Register new account
@@ -143,7 +143,7 @@ nelmio_api_doc:
             '409': { description: Email already in use }
           security: [ ]
 
-      /api/account/change_password:
+      /account/change_password:
         post:
           tags: [ Auth ]
           summary: Change password (requires authentication)
@@ -163,7 +163,7 @@ nelmio_api_doc:
             '400': { description: Bad Request }
             '401': { description: Unauthorized }
 
-      /api/account/password_reset:
+      /account/password_reset:
         post:
           tags: [ Auth ]
           summary: Start password reset (always 200)
@@ -181,7 +181,7 @@ nelmio_api_doc:
             '200': { description: OK }
           security: [ ]
 
-      /api/account/password_reset/confirm:
+      /account/password_reset/confirm:
         post:
           tags: [ Auth ]
           summary: Confirm password reset

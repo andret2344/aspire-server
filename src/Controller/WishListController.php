@@ -31,11 +31,6 @@ final class WishListController extends AbstractController
 		if (!$wishList) {
 			return $this->json(['detail' => 'Not found'], 404);
 		}
-		foreach ($wishList->getItems() as $item) {
-			if ($item->isHidden()) {
-				$wishList->removeItem($item);
-			}
-		}
 		return $this->json($wishList);
 	}
 

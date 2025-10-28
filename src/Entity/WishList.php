@@ -116,12 +116,6 @@ class WishList implements JsonSerializable
 		return $this->accessCode;
 	}
 
-	/**
-	 * Ustawia surowy (niezahashowany) kod dostępu lub czyści dostęp.
-	 *
-	 * - pusty string -> usuwa kod i ustawia hasPassword=false oraz odznacza hidden we wszystkich itemach.
-	 * - niepusty -> zapisuje RAW w pamięci (zahaszuje się w hooku przed zapisem).
-	 */
 	public function setAccessCodeRaw(string $raw): void
 	{
 		if ($raw === '') {
@@ -129,18 +123,15 @@ class WishList implements JsonSerializable
 			$this->hasPassword = false;
 			$this->accessCodeIsRaw = false;
 
-			// „Unhide” wszystkiego jak w Django (mass update w ORM-owym świecie robimy pętlą).
-			foreach ($this->items as $item) {
-				if ($item->isHidden()) {
-					$item->unhide();
-				}
+			foreach ($this->items->filter(fn(WishListItem $item) => $item->isHidden()) as $item) {
+				$item->unhide();
 			}
 			return;
 		}
 
-		$this->accessCode = $raw;     // tymczasowo raw
+		$this->accessCode = $raw;
 		$this->hasPassword = true;
-		$this->accessCodeIsRaw = true;     // zasygnalizuj hookowi
+		$this->accessCodeIsRaw = true;
 	}
 
 	/** Sprawdza raw kod względem hasha z bazy. */
@@ -149,7 +140,6 @@ class WishList implements JsonSerializable
 		if ($this->accessCode === null) {
 			return false;
 		}
-		// PASSWORD_ARGON2ID dostępny w PHP 8.x; bezpieczny wariant.
 		return password_verify($raw, $this->accessCode);
 	}
 
@@ -169,10 +159,8 @@ class WishList implements JsonSerializable
 
 	public function removeItem(WishListItem $item): void
 	{
-		if ($this->items->removeElement($item)) {
-			if ($item->getWishlist() === $this) {
-				$item->detachWishlist();
-			}
+		if ($this->items->removeElement($item) && $item->getWishlist() === $this) {
+			$item->detachWishlist();
 		}
 	}
 
@@ -201,11 +189,14 @@ class WishList implements JsonSerializable
 
 	public function jsonSerialize(): mixed
 	{
+		$visibleItems = $this->items
+			->filter(fn(WishListItem $item) => !$item->isHidden());
+
 		return [
 			'id' => $this->id,
 			'name' => $this->name,
 			'uuid' => $this->uuid,
-			'items' => $this->items->toArray(),
+			'items' => array_values($visibleItems->toArray()),
 			'has_password' => $this->hasPassword,
 		];
 	}
