@@ -46,7 +46,7 @@ final class WishListItemController extends AbstractController
 		if ($wishList instanceof JsonResponse) {
 			return $wishList;
 		}
-		return $this->json($wishList);
+		return $this->json($wishList->getItems());
 	}
 
 	#[Route('', name: 'create', methods: ['POST'])]
@@ -73,7 +73,7 @@ final class WishListItemController extends AbstractController
 			return $this->json(['detail' => $e->getMessage()], 400);
 		}
 
-		return $this->json($item, 201);
+		return $this->json($item->jsonSerialize(), 201);
 	}
 
 	#[Route('/{id<\d+>}', name: 'get', methods: ['GET'])]
@@ -89,7 +89,7 @@ final class WishListItemController extends AbstractController
 			return $this->json(['detail' => 'Not found'], 404);
 		}
 
-		return $this->json($item);
+		return $this->json($item->jsonSerialize());
 	}
 
 	#[Route('/{id<\d+>}', name: 'update', methods: ['PUT'])]
@@ -118,23 +118,23 @@ final class WishListItemController extends AbstractController
 			return $this->json(['detail' => $e->getMessage()], 400);
 		}
 
-		return $this->json($item);
+		return $this->json($item->jsonSerialize());
 	}
 
 	#[Route('/{id<\d+>}', name: 'delete', methods: ['DELETE'])]
 	public function delete(int $wishlistId, int $id): JsonResponse
 	{
-		$wl = $this->ownedWishlistOr404($wishlistId);
-		if ($wl instanceof JsonResponse) {
-			return $wl;
+		$wishList = $this->ownedWishlistOr404($wishlistId);
+		if ($wishList instanceof JsonResponse) {
+			return $wishList;
 		}
 
-		$it = $this->items->getOwnedItem($wl, $id);
-		if (!$it) {
+		$wishListItem = $this->items->getOwnedItem($wishList, $id);
+		if (!$wishListItem) {
 			return $this->json(['detail' => 'Not found'], 404);
 		}
 
-		$this->items->delete($it);
+		$this->items->delete($wishListItem);
 		return $this->json(['detail' => 'Deleted']);
 	}
 }

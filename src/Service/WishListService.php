@@ -9,7 +9,6 @@ use App\Entity\WishList;
 use App\Entity\WishListItem;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
-use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
@@ -31,14 +30,14 @@ final readonly class WishListService
 
 	public function create(User $user, string $name, ?string $accessCode = null): WishList
 	{
-		$wl = new WishList($user, $name);
+		$wishList = new WishList($user, $name);
 		if ($accessCode !== null) {
-			$wl->setAccessCodeRaw($accessCode);
+			$wishList->setAccessCodeRaw($accessCode);
 		}
-		$this->entityManager->persist($wl);
+		$this->entityManager->persist($wishList);
 		$this->entityManager->flush();
 
-		return $wl;
+		return $wishList;
 	}
 
 	public function getOwned(User $user, int $id): ?WishList

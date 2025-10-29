@@ -31,7 +31,7 @@ final class WishListController extends AbstractController
 		if (!$wishList) {
 			return $this->json(['detail' => 'Not found'], 404);
 		}
-		return $this->json($wishList);
+		return $this->json($wishList->jsonSerialize());
 	}
 
 	#[Route('', name: 'create', methods: ['POST'])]
@@ -48,7 +48,7 @@ final class WishListController extends AbstractController
 		}
 
 		$wishList = $this->wishListService->create($user, $name, $data['access_code'] ?? null);
-		return $this->json($wishList, 201);
+		return $this->json($wishList->jsonSerialize(), 201);
 	}
 
 	#[Route('/{id<\d+>}', name: 'get', methods: ['GET'])]
@@ -62,7 +62,7 @@ final class WishListController extends AbstractController
 		if (!$wishList) {
 			return $this->json(['detail' => 'Not found'], 404);
 		}
-		return $this->json($wishList);
+		return $this->json($wishList->jsonSerialize());
 	}
 
 	#[Route('/{id<\d+>}', name: 'update', methods: ['PUT'])]
@@ -88,7 +88,7 @@ final class WishListController extends AbstractController
 
 		$this->wishListService->update($wishList, $name, $hasAccessKey, $accessCode);
 
-		return $this->json($wishList);
+		return $this->json($wishList->jsonSerialize());
 	}
 
 	#[Route('/{id<\d+>}', name: 'delete', methods: ['DELETE'])]
@@ -98,12 +98,12 @@ final class WishListController extends AbstractController
 		/** @var User $user */
 		$user = $this->getUser();
 
-		$wl = $this->wishListService->getOwned($user, $id);
-		if (!$wl) {
+		$wishList = $this->wishListService->getOwned($user, $id);
+		if (!$wishList) {
 			return $this->json(['detail' => 'Not found'], 404);
 		}
 
-		$this->wishListService->softDelete($wl);
+		$this->wishListService->softDelete($wishList);
 		return $this->json(['detail' => 'Object deleted']);
 	}
 
