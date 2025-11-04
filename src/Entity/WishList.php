@@ -193,7 +193,7 @@ class WishList implements JsonSerializable
 			'id' => $this->id,
 			'name' => $this->name,
 			'uuid' => $this->uuid,
-			'items' => $this->items,
+			'items' => $this->items->toArray(),
 			'has_password' => $this->hasPassword,
 		];
 	}

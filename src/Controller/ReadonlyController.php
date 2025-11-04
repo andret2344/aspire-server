@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Entity\WishList;
 use App\Entity\WishListItem;
 use App\Service\WishListService;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -39,13 +40,13 @@ final class ReadonlyController extends AbstractController
 	private function serializeReadonlyWishlist(WishList $wishlist): array
 	{
 		$visibleItems = $wishlist->getItems()
-			->filter(fn(WishListItem $item) => !$item->isHidden())
-			->map(fn(WishListItem $item) => $item->jsonSerialize());
+			->filter(fn(WishListItem $item) => !$item->isHidden());
+
 		return [
 			'id' => $wishlist->getId(),
 			'name' => $wishlist->getName(),
 			'uuid' => $wishlist->getUuid(),
-			'items' => $visibleItems,
+			'items' => $visibleItems->getValues(),
 			'has_password' => $wishlist->hasPassword(),
 		];
 	}
