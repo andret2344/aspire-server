@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\WishList;
+use App\Entity\WishListItem;
 use App\Service\WishListService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -24,7 +26,7 @@ final class ReadonlyController extends AbstractController
 		if (!$wishList) {
 			throw $this->createNotFoundException();
 		}
-		return $this->json($wishList->jsonSerialize());
+		return $this->json($this->serializeReadonlyWishlist($wishList));
 	}
 
 	#[Route('/{uuid}/hidden_items', name: 'hidden_items', methods: ['GET'])]
@@ -32,5 +34,19 @@ final class ReadonlyController extends AbstractController
 	{
 		$items = $this->wishListService->hiddenItemsForUuid($uuid, $request->headers->get('Access-Code'));
 		return $this->json($items);
+	}
+
+	private function serializeReadonlyWishlist(WishList $wishlist): array
+	{
+		$visibleItems = $wishlist->getItems()
+			->filter(fn(WishListItem $item) => !$item->isHidden())
+			->map(fn(WishListItem $item) => $item->jsonSerialize());
+		return [
+			'id' => $wishlist->getId(),
+			'name' => $wishlist->getName(),
+			'uuid' => $wishlist->getUuid(),
+			'items' => $visibleItems,
+			'has_password' => $wishlist->hasPassword(),
+		];
 	}
 }

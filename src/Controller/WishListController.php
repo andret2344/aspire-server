@@ -19,7 +19,7 @@ final class WishListController extends AbstractController
 
 	#[Route('', name: 'list', methods: ['GET'])]
 	#[IsGranted('IS_AUTHENTICATED_FULLY')]
-	public function list(Request $request): JsonResponse
+	public function list(): JsonResponse
 	{
 		/** @var User $user */
 		$user = $this->getUser();

@@ -189,14 +189,11 @@ class WishList implements JsonSerializable
 
 	public function jsonSerialize(): mixed
 	{
-		$visibleItems = $this->items
-			->filter(fn(WishListItem $item) => !$item->isHidden());
-
 		return [
 			'id' => $this->id,
 			'name' => $this->name,
 			'uuid' => $this->uuid,
-			'items' => array_values($visibleItems->toArray()),
+			'items' => $this->items,
 			'has_password' => $this->hasPassword,
 		];
 	}
