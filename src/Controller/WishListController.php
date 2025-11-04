@@ -18,20 +18,12 @@ final class WishListController extends AbstractController
 	public function __construct(private readonly WishListService $wishListService) {}
 
 	#[Route('', name: 'list', methods: ['GET'])]
+	#[IsGranted('IS_AUTHENTICATED_FULLY')]
 	public function list(Request $request): JsonResponse
 	{
-		$uuid = $request->query->get('uuid');
-		if (!$uuid) {
-			$this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
-			/** @var User $user */
-			$user = $this->getUser();
-			return $this->json($this->wishListService->listFor($user));
-		}
-		$wishList = $this->wishListService->findPublicByUuid($uuid);
-		if (!$wishList) {
-			return $this->json(['detail' => 'Not found'], 404);
-		}
-		return $this->json($wishList->jsonSerialize());
+		/** @var User $user */
+		$user = $this->getUser();
+		return $this->json($this->wishListService->listFor($user));
 	}
 
 	#[Route('', name: 'create', methods: ['POST'])]

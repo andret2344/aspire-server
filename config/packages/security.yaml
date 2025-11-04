@@ -14,10 +14,6 @@ security:
       pattern: ^/(_(profiler|wdt)|css|images|js)/
       security: false
 
-    public_wishlist:
-      request_matcher: App\Security\RequestMatcher\PublicWishlistMatcher
-      stateless: true
-
     api:
       pattern: ^/
       stateless: true
@@ -42,12 +38,13 @@ security:
     # Development
     - { path: ^/_profiler, roles: PUBLIC_ACCESS }
     - { path: ^/_wdt, roles: PUBLIC_ACCESS }
-    # Public without a token
+    # Account
     - { path: ^/account/login$, roles: PUBLIC_ACCESS }
     - { path: ^/account/token/refresh$, roles: PUBLIC_ACCESS }
     - { path: ^/account/register$, roles: PUBLIC_ACCESS }
     - { path: ^/account/password_reset, roles: PUBLIC_ACCESS }
-    - { path: ^/wishlists$, methods: [ GET, OPTIONS ], roles: PUBLIC_ACCESS }
+    # Readonly
+    - { path: ^/readonly, methods: [ GET ], roles: PUBLIC_ACCESS }
     # Swagger
     - { path: ^/api/docs$, roles: PUBLIC_ACCESS }
     - { path: ^/api/doc\.json$, roles: PUBLIC_ACCESS }

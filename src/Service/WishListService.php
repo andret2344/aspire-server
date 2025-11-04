@@ -84,10 +84,4 @@ final readonly class WishListService
 		return $this->entityManager->getRepository(WishListItem::class)
 			->findBy(['wishlist' => $wishList, 'hidden' => true], ['id' => 'ASC']);
 	}
-
-	public function isOwner(?User $user, WishList $wl): bool
-	{
-		return $user?->getId() === $wl->getUser()
-				->getId();
-	}
 }

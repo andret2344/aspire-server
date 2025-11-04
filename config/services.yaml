@@ -17,5 +17,3 @@ services:
       - '../src/DependencyInjection/'
       - '../src/Entity/'
       - '../src/Kernel.php'
-
-  App\Security\RequestMatcher\PublicWishlistMatcher: ~
