@@ -7,9 +7,12 @@ use App\Dto\Auth\RegisterUserRequest;
 use App\Dto\Auth\ResetPasswordConfirmRequest;
 use App\Dto\Auth\ResetPasswordStartRequest;
 use App\Entity\User;
+use App\Entity\VerificationToken;
 use App\Service\Auth\PasswordResetService;
 use App\Service\Auth\UserService;
-use App\Service\Mail\EmailService;
+use App\Service\DiscoveryService;
+use App\Service\EmailService;
+use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,9 +24,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/account', name: 'account_')]
 final class AccountController extends AbstractController
 {
-	public function __construct(private readonly UserService          $userService,
-								private readonly EmailService         $emailService,
-								private readonly PasswordResetService $passwordResetService) {}
+	public function __construct(private readonly EntityManagerInterface $entityManager,
+								private readonly UserService            $userService,
+								private readonly EmailService           $emailService,
+								private readonly PasswordResetService   $passwordResetService,
+								private readonly DiscoveryService       $discoveryService) {}
 
 	#[Route('/register', name: 'register', methods: ['POST'])]
 	public function register(Request $request): JsonResponse
@@ -33,6 +38,7 @@ final class AccountController extends AbstractController
 
 		try {
 			$user = $this->userService->register($dto);
+			$this->sendVerificationEmail($user);
 		} catch (DomainException|InvalidArgumentException $e) {
 			return $this->json(['detail' => $e->getMessage()], 400);
 		}
@@ -42,9 +48,51 @@ final class AccountController extends AbstractController
 		], 201);
 	}
 
+	#[Route('/verify_email', name: 'verify_email', methods: ['POST'])]
+	public function verifyEmail(Request $request): JsonResponse
+	{
+		$userId = $request->toArray()['user_id'];
+		$user = $this->userService->getUserById($userId);
+		if ($user->getVerifiedDate() != null) {
+			return $this->json(['detail' => 'Email already verified.'], 400);
+		}
+		$this->sendVerificationEmail($user);
+		return $this->json(['message' => 'Verification email sent.']);
+	}
+
+	#[Route('/me', name: 'me', methods: ['GET'])]
+	#[IsGranted('IS_AUTHENTICATED_FULLY')]
+	public function me(): JsonResponse
+	{
+		/** @var User $user */
+		$user = $this->getUser();
+		return $this->json([
+			'id' => $user->getId(),
+			'email' => $user->getEmail(),
+			'is_verified' => $user->getVerifiedDate() !== null,
+			'last_login' => $user->getLastLogin()
+				?->format('Y-m-d H:i:sP'),
+		]);
+	}
+
+	#[Route('/confirm', name: 'confirm', methods: ['POST'])]
+	public function confirm(Request $request): JsonResponse
+	{
+		$token = $request->toArray()['token'];
+		if (!$token) {
+			return $this->json(['detail' => 'Token is required.'], 400);
+		}
+		$token = $this->userService->getToken($token);
+		if (!$token || !$token->isValid()) {
+			return $this->json(['detail' => 'Invalid token.'], 400);
+		}
+		$this->userService->confirmEmail($token);
+		return $this->json(['message' => 'Email confirmed.']);
+	}
+
 	#[Route('/change_password', name: 'change_password', methods: ['POST'])]
 	#[IsGranted('IS_AUTHENTICATED_FULLY')]
-	public function __invoke(Request $request): JsonResponse
+	public function changePassword(Request $request): JsonResponse
 	{
 		/** @var User $user */
 		$user = $this->getUser();
@@ -66,19 +114,18 @@ final class AccountController extends AbstractController
 			from: 'aspire@aspireapp.online',
 			to: $user->getEmail(),
 			subject: 'Password reset successfully',
-			template: 'emails/password_reset_successful_confirmation.html.twig'
+			template: 'password_reset_confirmation.html.twig'
 		);
 
 		return $this->json(['message' => 'Password changed successfully']);
 	}
 
 	#[Route('/password_reset', name: 'password_reset', methods: ['POST'])]
-	public function start(Request $request): JsonResponse
+	public function passwordReset(Request $request): JsonResponse
 	{
 		$data = json_decode($request->getContent() ?: '{}', true, 512, JSON_THROW_ON_ERROR);
 		$dto = ResetPasswordStartRequest::fromArray($data);
 
-		// Zawsze 200 – nie ujawniamy, czy istnieje email
 		$this->passwordResetService->start($dto);
 
 		return $this->json([
@@ -88,7 +135,7 @@ final class AccountController extends AbstractController
 	}
 
 	#[Route('/password_reset/confirm', name: 'password_reset_confirm', methods: ['POST'])]
-	public function confirm(Request $request): JsonResponse
+	public function passwordResetConfirm(Request $request): JsonResponse
 	{
 		$data = json_decode($request->getContent() ?: '{}', true, 512, JSON_THROW_ON_ERROR);
 		$dto = ResetPasswordConfirmRequest::fromArray($data);
@@ -100,5 +147,29 @@ final class AccountController extends AbstractController
 		}
 
 		return $this->json(['message' => 'Password reset successfully']);
+	}
+
+	private function sendVerificationEmail(User $user): void
+	{
+		$token = $this->entityManager->getRepository(VerificationToken::class)
+			->findOneBy(['user' => $user]);
+		if (!$token) {
+			throw new InvalidArgumentException('Verification token not found for user');
+		}
+		$this->emailService->send(
+			from: 'aspire@aspireapp.online',
+			to: $user->getEmail(),
+			subject: 'Verify your email',
+			template: 'emails/verify_email.html.twig',
+			context: [
+				'current_user' => $user->getEmail(),
+				'verification_url' => $this->createUrl($this->discoveryService->getDiscoveryData()['frontend'], $token->token)
+			]
+		);
+	}
+
+	private function createUrl(string $host, string $token): string
+	{
+		return sprintf('%s/confirm/%s', $host, $token);
 	}
 }

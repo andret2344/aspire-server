@@ -1,0 +1,23 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block subject %}Verify Your Email - Aspire{% endblock %}
+
+{% block greeting %}
+	<p class="greeting">Hello <strong>{{ current_user }}</strong>,</p>
+{% endblock %}
+
+{% block message %}
+	<p>Welcome to <strong>Aspire</strong> — we’re excited to have you on board!</p>
+	<p>To complete your registration, please verify your email address by clicking the button below:</p>
+{% endblock %}
+
+{% block cta %}
+	<div class="button-wrapper">
+		<a
+			class="button"
+			href="{{ verification_url }}"
+			target="_blank"
+			rel="noopener">Verify Email</a>
+	</div>
+	<p>Once verified, you’ll gain full access to your account.</p>
+{% endblock %}

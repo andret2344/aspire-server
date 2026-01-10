@@ -7,7 +7,7 @@ namespace App\Service\Auth;
 use App\Dto\Auth\ResetPasswordConfirmRequest;
 use App\Dto\Auth\ResetPasswordStartRequest;
 use App\Entity\User;
-use App\Service\Mail\EmailService;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use InvalidArgumentException;
@@ -49,7 +49,7 @@ final readonly class PasswordResetService
 			from: 'aspire@aspireapp.online',
 			to: $user->getEmail(),
 			subject: 'Reset your Aspire password',
-			template: 'emails/password_reset_email.html.twig',
+			template: 'password_reset.html.twig',
 			context: ['reset_password_url' => $link]);
 	}
 
@@ -70,7 +70,6 @@ final readonly class PasswordResetService
 
 		$this->resetPasswordHelper->removeResetRequest($dto->token);
 
-		// ustaw nowe hasło
 		$user->setPlainPassword($dto->password);
 		$this->entityManager->flush();
 
@@ -78,6 +77,7 @@ final readonly class PasswordResetService
 			from: 'aspire@aspireapp.online',
 			to: $user->getEmail(),
 			subject: 'Password reset successfully',
-			template: 'emails/password_reset_successful_confirmation.html.twig');
+			template: 'password_reset_confirmation.html.twig',
+			context: ['user' => $user]);
 	}
 }

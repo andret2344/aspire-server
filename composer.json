@@ -4,34 +4,35 @@
 	"minimum-stability": "stable",
 	"prefer-stable": true,
 	"require": {
-		"php": ">=8.4",
+		"php": ">=8.5",
 		"ext-ctype": "*",
 		"ext-iconv": "*",
-		"doctrine/dbal": "^3.10.3",
-		"doctrine/doctrine-bundle": "^2.18",
-		"doctrine/doctrine-migrations-bundle": "^3.5",
-		"doctrine/orm": "^3.5.2",
-		"gesdinet/jwt-refresh-token-bundle": "^1.5",
-		"lexik/jwt-authentication-bundle": "^3.1.1",
-		"nelmio/api-doc-bundle": "^5.6.3",
-		"nelmio/cors-bundle": "^2.5",
-		"symfony/asset": "7.3.*",
-		"symfony/console": ">=7.3.4",
-		"symfony/dotenv": ">=7.3.2",
-		"symfony/flex": "^2.8.2",
-		"symfony/framework-bundle": ">=7.3.4",
-		"symfony/http-client": "7.3.*",
-		"symfony/mailer": "7.3.*",
-		"symfony/runtime": ">=7.3.4",
-		"symfony/security-bundle": "7.3.*",
-		"symfony/twig-bundle": "7.3.*",
-		"symfony/uid": "7.3.*",
-		"symfony/validator": "7.3.*",
-		"symfony/yaml": ">=7.3.3",
-		"symfonycasts/reset-password-bundle": "^1.23.2",
-		"twig/extra-bundle": "^2.12|^3.21",
-		"twig/twig": "^2.12|^3.21.1",
-		"zircote/swagger-php": "^5.5"
+		"doctrine/dbal": "^4.4.1",
+		"doctrine/doctrine-bundle": "^3.2.2",
+		"doctrine/doctrine-migrations-bundle": "^4.0.0",
+		"doctrine/orm": "^3.6.1",
+		"gesdinet/jwt-refresh-token-bundle": "^2.0.0-beta",
+		"lexik/jwt-authentication-bundle": "^v3.2.0",
+		"nelmio/api-doc-bundle": "^v5.9.2",
+		"nelmio/cors-bundle": "^2.6.0",
+		"symfony/asset": ">=8",
+		"symfony/console": ">=8.0.3",
+		"symfony/dotenv": ">=8",
+		"symfony/flex": "^v2.10.0",
+		"symfony/framework-bundle": ">=8.0.3",
+		"symfony/google-mailer": "8.0.*",
+		"symfony/http-client": ">=8.0.3",
+		"symfony/mailer": ">=8.0.3",
+		"symfony/runtime": ">=8.0.1",
+		"symfony/security-bundle": ">=8",
+		"symfony/twig-bundle": ">=8.0.3",
+		"symfony/uid": ">=8",
+		"symfony/validator": ">=8.0.3",
+		"symfony/yaml": ">=8.0.1",
+		"symfonycasts/reset-password-bundle": "^v1.24.0",
+		"twig/extra-bundle": "^v3.22.2",
+		"twig/twig": "^v3.22.2",
+		"zircote/swagger-php": "^5.7.7"
 	},
 	"config": {
 		"allow-plugins": {
@@ -80,13 +81,13 @@
 	"extra": {
 		"symfony": {
 			"allow-contrib": false,
-			"require": "7.3.*"
+			"require": "8.0.*"
 		}
 	},
 	"require-dev": {
-		"phpunit/phpunit": "^12.4.1",
-		"symfony/maker-bundle": "^1.64",
-		"symfony/stopwatch": "7.3.*",
-		"symfony/web-profiler-bundle": "7.3.*"
+		"phpunit/phpunit": "^12.5.4",
+		"symfony/maker-bundle": "^v1.65.1",
+		"symfony/stopwatch": ">=8",
+		"symfony/web-profiler-bundle": ">=8.0.3"
 	}
 }

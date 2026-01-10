@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Entity\WishList;
-use App\Entity\WishListItem;
-use App\Service\WishListService;
+use App\Entity\Wishlist;
+use App\Entity\WishlistItem;
+use App\Service\WishlistService;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -18,7 +18,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/readonly', name: 'readonly_')]
 final class ReadonlyController extends AbstractController
 {
-	public function __construct(private readonly WishListService $wishListService) {}
+	public function __construct(private readonly WishlistService $wishListService) {}
 
 	#[Route('/{uuid}', name: 'get', methods: ['GET'])]
 	public function get(string $uuid): JsonResponse
@@ -37,17 +37,17 @@ final class ReadonlyController extends AbstractController
 		return $this->json($items);
 	}
 
-	private function serializeReadonlyWishlist(WishList $wishlist): array
+	private function serializeReadonlyWishlist(Wishlist $wishlist): array
 	{
 		$visibleItems = $wishlist->getItems()
-			->filter(fn(WishListItem $item) => !$item->isHidden());
+			->filter(fn(WishlistItem $item) => !$item->isHidden());
 
 		return [
 			'id' => $wishlist->getId(),
 			'name' => $wishlist->getName(),
 			'uuid' => $wishlist->getUuid(),
 			'items' => $visibleItems->getValues(),
-			'has_password' => $wishlist->hasPassword(),
+			'has_password' => $wishlist->getAccessCode() !== null,
 		];
 	}
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -13,17 +14,14 @@ use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'wishlists')]
 #[ORM\UniqueConstraint(name: 'uniq_wishlist_uuid', columns: ['uuid'])]
-#[ORM\HasLifecycleCallbacks]
-class WishList implements JsonSerializable
+class Wishlist implements JsonSerializable
 {
 	#[ORM\Id]
 	#[ORM\GeneratedValue]
 	#[ORM\Column(type: Types::INTEGER)]
 	private ?int $id = null;
 
-	/** Public-share identifier (read-only view link). */
 	#[ORM\Column(type: 'uuid', unique: true)]
 	private Uuid $uuid;
 
@@ -33,7 +31,7 @@ class WishList implements JsonSerializable
 	private string $name;
 
 	#[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
-	private ?\DateTimeImmutable $isDeleted = null;
+	private ?DateTimeImmutable $isDeleted = null;
 
 	#[ORM\ManyToOne(targetEntity: User::class)]
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -42,16 +40,8 @@ class WishList implements JsonSerializable
 	#[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
 	private ?string $accessCode = null;
 
-	/** Flaga „ma hasło” (szybkie sprawdzenie, bez ładowania pola). */
-	#[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
-	private bool $hasPassword = false;
-
-	/** Pozycje listy (nie kasujemy przy usunięciu listy – DO_NOTHING w dziecku). */
-	#[ORM\OneToMany(targetEntity: WishListItem::class, mappedBy: 'wishlist', cascade: ['remove'])]
+	#[ORM\OneToMany(targetEntity: WishlistItem::class, mappedBy: 'wishlist', cascade: ['remove'], orphanRemoval: true)]
 	private Collection $items;
-
-	/** Flaga pomocnicza: czy accessCode wymaga hashowania. */
-	private bool $accessCodeIsRaw = false;
 
 	public function __construct(User $user, string $name)
 	{
@@ -106,50 +96,38 @@ class WishList implements JsonSerializable
 		$this->user = $newOwner;
 	}
 
-	public function hasPassword(): bool
-	{
-		return $this->hasPassword;
-	}
-
-	public function getAccessCodeHash(): ?string
+	public function getAccessCode(): ?string
 	{
 		return $this->accessCode;
 	}
 
-	public function setAccessCodeRaw(string $raw): void
+	public function setAccessCode(string $raw): void
 	{
-		if ($raw === '') {
-			$this->accessCode = null;
-			$this->hasPassword = false;
-			$this->accessCodeIsRaw = false;
-
-			foreach ($this->items->filter(fn(WishListItem $item) => $item->isHidden()) as $item) {
-				$item->unhide();
-			}
+		if ($raw !== '') {
+			$this->accessCode = $raw;
 			return;
 		}
 
-		$this->accessCode = $raw;
-		$this->hasPassword = true;
-		$this->accessCodeIsRaw = true;
+		$this->accessCode = null;
+		foreach ($this->items->filter(fn(WishlistItem $item) => $item->isHidden()) as $item) {
+			$item->unhide();
+		}
 	}
 
-	/** Sprawdza raw kod względem hasha z bazy. */
-	public function checkAccessCode(string $raw): bool
+	public function checkAccessCode(string $accessCode): bool
 	{
 		if ($this->accessCode === null) {
 			return false;
 		}
-		return password_verify($raw, $this->accessCode);
+		return $accessCode === $this->accessCode;
 	}
 
-	/** @return Collection<int, WishListItem> */
 	public function getItems(): Collection
 	{
 		return $this->items;
 	}
 
-	public function addItem(WishListItem $item): void
+	public function addItem(WishlistItem $item): void
 	{
 		if (!$this->items->contains($item)) {
 			$this->items->add($item);
@@ -157,11 +135,9 @@ class WishList implements JsonSerializable
 		}
 	}
 
-	public function removeItem(WishListItem $item): void
+	public function removeItem(WishlistItem $item): void
 	{
-		if ($this->items->removeElement($item) && $item->getWishlist() === $this) {
-			$item->detachWishlist();
-		}
+		$this->items->removeElement($item);
 	}
 
 	public function __toString(): string
@@ -169,32 +145,14 @@ class WishList implements JsonSerializable
 		return $this->name;
 	}
 
-	// ----------------- Field hooks (lifecycle) -----------------
-
-	#[ORM\PrePersist]
-	#[ORM\PreUpdate]
-	public function hashAccessCodeIfNeeded(): void
-	{
-		if ($this->accessCodeIsRaw && $this->accessCode !== null) {
-			// Jeżeli wygląda na już zahashowane – nic nie rób (np. migracja danych).
-			$info = password_get_info($this->accessCode);
-			$alreadyHashed = isset($info['algo']) && $info['algo'] !== 0;
-
-			if (!$alreadyHashed) {
-				$this->accessCode = password_hash($this->accessCode, PASSWORD_ARGON2ID);
-			}
-			$this->accessCodeIsRaw = false;
-		}
-	}
-
-	public function jsonSerialize(): mixed
+	public function jsonSerialize(): array
 	{
 		return [
 			'id' => $this->id,
 			'name' => $this->name,
 			'uuid' => $this->uuid,
 			'items' => $this->items->toArray(),
-			'has_password' => $this->hasPassword,
+			'has_password' => $this->accessCode !== null,
 		];
 	}
 }

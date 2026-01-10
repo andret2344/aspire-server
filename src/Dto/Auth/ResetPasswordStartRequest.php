@@ -12,7 +12,6 @@ final class ResetPasswordStartRequest
 	#[Assert\Email]
 	public string $email;
 
-	/** URL frontu do złożenia linku (jak w Django). */
 	#[Assert\NotBlank]
 	#[Assert\Url]
 	public string $url;

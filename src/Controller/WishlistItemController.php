@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Entity\WishList;
-use App\Service\WishListItemService;
-use App\Service\WishListService;
+use App\Entity\Wishlist;
+use App\Service\WishlistItemService;
+use App\Service\WishlistService;
 use DomainException;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,14 +21,14 @@ use OpenApi\Attributes as OA;
 #[Route('/wishlists/{wishlistId<\d+>}/items', name: 'wishlist_items_')]
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 #[OA\Tag(name: 'Wishlist Items')]
-final class WishListItemController extends AbstractController
+final class WishlistItemController extends AbstractController
 {
 	public function __construct(
-		private readonly WishListService     $wishlists,
-		private readonly WishListItemService $items,
+		private readonly WishlistService     $wishlists,
+		private readonly WishlistItemService $items,
 	) {}
 
-	private function ownedWishlistOr404(int $wishlistId): WishList|JsonResponse
+	private function ownedWishlistOr404(int $wishlistId): Wishlist|JsonResponse
 	{
 		/** @var User $user */
 		$user = $this->getUser();

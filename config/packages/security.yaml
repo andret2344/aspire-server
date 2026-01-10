@@ -1,7 +1,9 @@
 security:
   password_hashers:
     App\Entity\User:
-      algorithm: auto
+      algorithm: argon2id
+      memory_cost: 65536
+      time_cost: 4
       migrate_from:
         - 'auto'
   providers:
@@ -38,11 +40,13 @@ security:
     # Development
     - { path: ^/_profiler, roles: PUBLIC_ACCESS }
     - { path: ^/_wdt, roles: PUBLIC_ACCESS }
-    # Account
+    # Auth
     - { path: ^/account/login$, roles: PUBLIC_ACCESS }
     - { path: ^/account/token/refresh$, roles: PUBLIC_ACCESS }
     - { path: ^/account/register$, roles: PUBLIC_ACCESS }
     - { path: ^/account/password_reset, roles: PUBLIC_ACCESS }
+    # Account
+    - { path: ^/account, roles: IS_AUTHENTICATED_FULLY }
     # Readonly
     - { path: ^/readonly, methods: [ GET ], roles: PUBLIC_ACCESS }
     # Swagger

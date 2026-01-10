@@ -10,8 +10,7 @@ use JsonSerializable;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'wishlist_items')]
-class WishListItem implements JsonSerializable
+class WishlistItem implements JsonSerializable
 {
 	#[ORM\Id]
 	#[ORM\GeneratedValue]
@@ -26,29 +25,22 @@ class WishListItem implements JsonSerializable
 	#[ORM\Column(type: Types::TEXT)]
 	private string $description;
 
-	/** 1..5 jak w Django (default 1). */
 	#[ORM\Column(type: Types::SMALLINT, options: ['default' => 1])]
 	#[Assert\Range(min: 1, max: 5)]
 	private int $priority;
 
-	/** Autor pozycji. On delete: CASCADE. */
 	#[ORM\ManyToOne(targetEntity: User::class)]
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
 	private User $user;
 
-	/**
-	 * Powiązana lista życzeń. On delete: NO ACTION (DO_NOTHING).
-	 * Jeśli chcesz zablokować usunięcie listy, zostaw NO ACTION;
-	 * jeśli jednak chcesz „osierocić” – rozważ SET NULL.
-	 */
-	#[ORM\ManyToOne(targetEntity: WishList::class, inversedBy: 'items')]
-	#[ORM\JoinColumn(nullable: false, onDelete: 'NO ACTION')]
-	private WishList $wishlist;
+	#[ORM\ManyToOne(targetEntity: Wishlist::class, inversedBy: 'items')]
+	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+	private Wishlist $wishlist;
 
 	#[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
 	private bool $hidden = false;
 
-	public function __construct(User $user, WishList $wishlist, string $name, string $description, int $priority = 1)
+	public function __construct(User $user, Wishlist $wishlist, string $name, string $description, int $priority = 1)
 	{
 		$this->user = $user;
 		$this->wishlist = $wishlist;
@@ -120,22 +112,14 @@ class WishListItem implements JsonSerializable
 		return $this->user;
 	}
 
-	public function getWishlist(): WishList
+	public function getWishlist(): Wishlist
 	{
 		return $this->wishlist;
 	}
 
-	/** Używane z poziomu WishList::addItem() */
-	public function attachTo(WishList $wishlist): void
+	public function attachTo(Wishlist $wishlist): void
 	{
 		$this->wishlist = $wishlist;
-	}
-
-	/** Używane z poziomu WishList::removeItem() */
-	public function detachWishlist(): void
-	{
-		// pozostawiamy wymagane FK; jeśli chcesz pozwolić na null, zmień join na nullable: true
-		// i tutaj ustaw $this->wishlist = null;
 	}
 
 	public function jsonSerialize(): mixed
