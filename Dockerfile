@@ -1,21 +1,50 @@
-FROM php:8.5-fpm-alpine
+# Deps
+FROM composer:2 AS deps
+WORKDIR /app
+
+COPY composer.json composer.lock symfony.lock* ./
+
+RUN --mount=type=cache,target=/tmp/composer-cache \
+    composer install \
+      --no-interaction \
+      --no-dev \
+      --prefer-dist \
+      --optimize-autoloader \
+      --no-scripts \
+      --no-progress
+
+# Build
+FROM php:8.5-cli-alpine AS build
+WORKDIR /app
+
+RUN apk add --no-cache bash
+
+COPY . /app
+COPY --from=deps /app/vendor /app/vendor
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN composer dump-autoload --no-dev --classmap-authoritative --no-interaction
+
+ARG APP_ENV=prod
+ENV APP_ENV=${APP_ENV}
+
+# Runtime
+FROM php:8.5-fpm-alpine AS runtime
 
 COPY --from=mlocati/php-extension-installer:2.7.2 /usr/bin/install-php-extensions /usr/local/bin/
 
 RUN set -eux; \
     chmod +x /usr/local/bin/install-php-extensions; \
-    \
     apk add --no-cache \
         nginx supervisor bash curl tzdata \
         icu-libs libzip oniguruma; \
-    \
     install-php-extensions \
         intl \
         pdo_mysql \
         opcache; \
-    \
     php -m | sort
 
+# PHP prod settings
 RUN set -eux; \
     { \
       echo 'opcache.enable=1'; \
@@ -27,8 +56,17 @@ RUN set -eux; \
     } > /usr/local/etc/php/conf.d/prod.ini
 
 WORKDIR /var/www/html
-COPY . /var/www/html/
 
+# Kopiujemy aplikację + vendor + ewentualny cache
+COPY --from=build /app /var/www/html
+
+# Konfigi runtime
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/supervisord.conf /etc/supervisord.conf
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Katalogi nginx + symfony var permissions
 RUN set -eux; \
     mkdir -p /run/nginx \
              /var/lib/nginx/tmp/client_body \
@@ -39,12 +77,7 @@ RUN set -eux; \
     mkdir -p /var/www/html/var; \
     chown -R www-data:www-data /var/www/html/var
 
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/supervisord.conf /etc/supervisord.conf
-
 EXPOSE 8083
 
-HEALTHCHECK --interval=300s --timeout=15s --start-period=30s \
-  CMD curl -fsS http://127.0.0.1:8083/health || exit 1
-
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
