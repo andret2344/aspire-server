@@ -5,29 +5,29 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\User;
-use App\Entity\WishList;
-use App\Entity\WishListItem;
+use App\Entity\Wishlist;
+use App\Entity\WishlistItem;
 use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use InvalidArgumentException;
 
-final readonly class WishListItemService
+final readonly class WishlistItemService
 {
 	public function __construct(private EntityManagerInterface $entityManager) {}
 
-	public function listForWishlist(WishList $wl): array
+	public function listForWishlist(Wishlist $wl): array
 	{
-		return $this->entityManager->getRepository(WishListItem::class)
+		return $this->entityManager->getRepository(WishlistItem::class)
 			->findBy(['wishlist' => $wl], ['id' => 'ASC']);
 	}
 
-	public function getOwnedItem(WishList $wishList, int $id): ?WishListItem
+	public function getOwnedItem(Wishlist $wishList, int $id): ?WishlistItem
 	{
-		return $this->entityManager->getRepository(WishListItem::class)
+		return $this->entityManager->getRepository(WishlistItem::class)
 			->findOneBy(['id' => $id, 'wishlist' => $wishList]);
 	}
 
-	public function create(User $user, WishList $wishList, string $name, string $description, int $priority, bool $hidden): WishListItem
+	public function create(User $user, Wishlist $wishList, string $name, string $description, int $priority, bool $hidden): WishlistItem
 	{
 		if ($name === '') {
 			throw new InvalidArgumentException('Field "name" is required');
@@ -39,7 +39,7 @@ final readonly class WishListItemService
 			throw new DomainException('Wishlist must have an access code to allow hidden items.');
 		}
 
-		$it = new WishListItem($user, $wishList, $name, $description, $priority);
+		$it = new WishlistItem($user, $wishList, $name, $description, $priority);
 		if ($hidden) {
 			$it->hide();
 		}
@@ -50,7 +50,7 @@ final readonly class WishListItemService
 		return $it;
 	}
 
-	public function update(WishListItem $item, WishList $wishList, ?string $name, ?string $description, ?int $priority, ?bool $hidden): WishListItem
+	public function update(WishlistItem $item, Wishlist $wishList, ?string $name, ?string $description, ?int $priority, ?bool $hidden): WishlistItem
 	{
 		if ($name !== null) {
 			$name = trim($name);
@@ -83,7 +83,7 @@ final readonly class WishListItemService
 		return $item;
 	}
 
-	public function delete(WishListItem $it): void
+	public function delete(WishlistItem $it): void
 	{
 		$this->entityManager->remove($it);
 		$this->entityManager->flush();

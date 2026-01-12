@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Service\WishListService;
+use App\Service\WishlistService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,9 +13,9 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route('/wishlists', name: 'wishlists_')]
-final class WishListController extends AbstractController
+final class WishlistController extends AbstractController
 {
-	public function __construct(private readonly WishListService $wishListService) {}
+	public function __construct(private readonly WishlistService $wishListService) {}
 
 	#[Route('', name: 'list', methods: ['GET'])]
 	#[IsGranted('IS_AUTHENTICATED_FULLY')]

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8"/>
+	<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"/>
+	<title>{% block subject %}Aspire{% endblock %}</title>
+
+	<link
+			href="https://fonts.googleapis.com/css2?family=Courgette&display=swap"
+			rel="stylesheet"/>
+
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+			background-color: #0d1117;
+			font-family: Arial, sans-serif;
+			color: #e6edf3;
+		}
+
+		.email-container {
+			max-width: 600px;
+			margin: 40px auto;
+			background-color: #161b22;
+			border-radius: 12px;
+			box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+			border: 1px solid #30363d;
+			overflow: hidden;
+		}
+
+		.header {
+			text-align: center;
+			padding: 28px 24px 18px;
+			border-bottom: 1px solid #30363d;
+		}
+
+		.header h1 {
+			font-family: 'Courgette', cursive;
+			color: #58a6ff;
+			font-size: 32px;
+			margin: 0;
+		}
+
+		.header p {
+			color: #8b949e;
+			font-size: 13px;
+			margin-top: 8px;
+		}
+
+		.content {
+			padding: 28px 32px;
+			font-size: 15px;
+			line-height: 1.65;
+		}
+
+		.greeting {
+			margin-top: 0;
+			font-size: 16px;
+		}
+
+		.button-wrapper {
+			text-align: center;
+			margin: 30px 0;
+		}
+
+		.button {
+			background-color: #1f6feb;
+			color: #ffffff !important;
+			padding: 12px 24px;
+			border-radius: 8px;
+			text-decoration: none;
+			font-weight: bold;
+			display: inline-block;
+		}
+
+		.button:hover {
+			background-color: #2f81f7;
+		}
+
+		.footer {
+			text-align: center;
+			font-size: 13px;
+			color: #8b949e;
+			border-top: 1px solid #30363d;
+			padding: 18px 24px 26px;
+		}
+
+		a {
+			color: #58a6ff;
+			text-decoration: none;
+		}
+
+		a:hover {
+			text-decoration: underline;
+		}
+
+		@media (max-width: 480px) {
+			.email-container {
+				margin: 20px;
+			}
+
+			.content {
+				padding: 22px 18px;
+			}
+
+			.header h1 {
+				font-size: 26px;
+			}
+		}
+	</style>
+</head>
+
+<body>
+<div class="email-container">
+	<div class="header">
+		<h1>Aspire</h1>
+		<p>The Aspiration Abyss</p>
+	</div>
+
+	<div class="content">
+		{% block greeting %}{% endblock %}
+		{% block message %}{% endblock %}
+		{% block cta %}{% endblock %}
+	</div>
+
+	<div class="footer">
+		Best regards,<br/>
+		The Aspire Team
+	</div>
+</div>
+</body>
+</html>

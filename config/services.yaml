@@ -17,3 +17,19 @@ services:
       - '../src/DependencyInjection/'
       - '../src/Entity/'
       - '../src/Kernel.php'
+
+  App\Discovery\ProdDiscoveryProvider:
+    arguments:
+      $token: '%env(string:DISCOVERY_TOKEN)%'
+
+when@dev:
+  services:
+    App\Discovery\DiscoveryProviderInterface: '@App\Discovery\DevDiscoveryProvider'
+
+when@prod:
+  services:
+    App\Discovery\DiscoveryProviderInterface: '@App\Discovery\ProdDiscoveryProvider'
+
+when@test:
+  services:
+    App\Discovery\DiscoveryProviderInterface: '@App\Discovery\DevDiscoveryProvider'

@@ -5,7 +5,7 @@ on:
     tags: [ "v*" ]
 
 env:
-  PHP_VERSION: "8.4"
+  PHP_VERSION: "8.5"
   IMAGE_NAME: ghcr.io/${{ github.repository }}
   COMPOSER_CACHE_DIR: ~/.cache/composer
 
@@ -86,14 +86,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Compute docker tags
+        id: tags
+        run: |
+          TAGS="${{ env.IMAGE_NAME }}:${{ github.ref_name }}"
+          if [[ "${{ github.ref_name }}" != *"-dev"* && "${{ github.ref_name }}" != *"-rc"* ]]; then
+            TAGS="$TAGS,${{ env.IMAGE_NAME }}:latest"
+          fi
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: ./artifact
           file: ./artifact/Dockerfile
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
-            ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
