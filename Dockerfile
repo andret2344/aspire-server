@@ -44,7 +44,6 @@ RUN set -eux; \
         opcache; \
     php -m | sort
 
-# PHP prod settings
 RUN set -eux; \
     { \
       echo 'opcache.enable=1'; \
@@ -57,16 +56,13 @@ RUN set -eux; \
 
 WORKDIR /var/www/html
 
-# Kopiujemy aplikację + vendor + ewentualny cache
 COPY --from=build /app /var/www/html
 
-# Konfigi runtime
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Katalogi nginx + symfony var permissions
 RUN set -eux; \
     mkdir -p /run/nginx \
              /var/lib/nginx/tmp/client_body \
