@@ -13,7 +13,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use InvalidArgumentException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use function count;
 
@@ -44,9 +43,6 @@ final readonly class UserService
 		$this->entityManager->persist($user);
 		$this->entityManager->flush();
 
-		$this->entityManager->persist(new VerificationToken($user, Uuid::v4()));
-		$this->entityManager->flush();
-
 		return $user;
 	}
 
@@ -71,16 +67,10 @@ final readonly class UserService
 		$this->entityManager->flush();
 	}
 
-	public function getUserById(int $id): User
+	public function getUserById(int $id): ?User
 	{
 		return $this->entityManager->getRepository(User::class)
 			->findOneBy(['id' => $id]);
-	}
-
-	public function getToken(string $token): ?VerificationToken
-	{
-		return $this->entityManager->getRepository(VerificationToken::class)
-			->findOneBy(['token' => $token]);
 	}
 
 	public function confirmEmail(VerificationToken $token): void

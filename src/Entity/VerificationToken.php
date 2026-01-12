@@ -2,12 +2,12 @@
 
 namespace App\Entity;
 
+use App\Repository\VerificationTokenRepository;
 use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Uid\Uuid;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: VerificationTokenRepository::class)]
 class VerificationToken
 {
 	#[ORM\Id]
@@ -19,8 +19,8 @@ class VerificationToken
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
 	private(set) User $user;
 
-	#[ORM\Column(length: 255)]
-	private(set) string $token;
+	#[ORM\Column(length: 64, unique: true)]
+	private(set) string $hash;
 
 	#[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
 	private(set) DateTimeImmutable $expiresAt;
@@ -28,11 +28,16 @@ class VerificationToken
 	#[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
 	private(set) ?DateTimeImmutable $usedAt = null;
 
-	public function __construct(User $user, Uuid $token)
+	public function __construct(User $user, string $hash)
 	{
 		$this->user = $user;
-		$this->token = $token->toRfc4122();
+		$this->hash = $hash;
 		$this->expiresAt = new DateTimeImmutable('+15 minutes');
+	}
+
+	public function expire(): void
+	{
+		$this->expiresAt = new DateTimeImmutable();
 	}
 
 	public function isExpired(): bool
@@ -53,10 +58,5 @@ class VerificationToken
 	public function isValid(): bool
 	{
 		return !$this->isExpired() && !$this->isUsed();
-	}
-
-	public function __toString(): string
-	{
-		return $this->token;
 	}
 }
