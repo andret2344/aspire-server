@@ -12,6 +12,7 @@ use App\Service\Auth\PasswordResetService;
 use App\Service\Auth\UserService;
 use App\Service\DiscoveryService;
 use App\Service\EmailService;
+use App\Service\VerificationTokenService;
 use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use InvalidArgumentException;
@@ -20,15 +21,16 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Uid\Uuid;
 
 #[Route('/account', name: 'account_')]
 final class AccountController extends AbstractController
 {
-	public function __construct(private readonly EntityManagerInterface $entityManager,
-								private readonly UserService            $userService,
-								private readonly EmailService           $emailService,
-								private readonly PasswordResetService   $passwordResetService,
-								private readonly DiscoveryService       $discoveryService) {}
+	public function __construct(private readonly UserService              $userService,
+								private readonly EmailService             $emailService,
+								private readonly PasswordResetService     $passwordResetService,
+								private readonly DiscoveryService         $discoveryService,
+								private readonly VerificationTokenService $tokenService) {}
 
 	#[Route('/register', name: 'register', methods: ['POST'])]
 	public function register(Request $request): JsonResponse
@@ -38,7 +40,8 @@ final class AccountController extends AbstractController
 
 		try {
 			$user = $this->userService->register($dto);
-			$this->sendVerificationEmail($user);
+			$plainToken = $this->tokenService->recreateToken($user);
+			$this->sendVerificationEmail($user, $plainToken);
 		} catch (DomainException|InvalidArgumentException $e) {
 			return $this->json(['detail' => $e->getMessage()], 400);
 		}
@@ -53,10 +56,14 @@ final class AccountController extends AbstractController
 	{
 		$userId = $request->toArray()['user_id'];
 		$user = $this->userService->getUserById($userId);
+		if ($user === null) {
+			return $this->json(['detail' => 'User not found.'], 404);
+		}
 		if ($user->getVerifiedDate() != null) {
 			return $this->json(['detail' => 'Email already verified.'], 400);
 		}
-		$this->sendVerificationEmail($user);
+		$plainToken = $this->tokenService->recreateToken($user);
+		$this->sendVerificationEmail($user, $plainToken);
 		return $this->json(['message' => 'Verification email sent.']);
 	}
 
@@ -78,11 +85,11 @@ final class AccountController extends AbstractController
 	#[Route('/confirm', name: 'confirm', methods: ['POST'])]
 	public function confirm(Request $request): JsonResponse
 	{
-		$token = $request->toArray()['token'];
-		if (!$token) {
+		$plainToken = $request->toArray()['token'];
+		if (!$plainToken) {
 			return $this->json(['detail' => 'Token is required.'], 400);
 		}
-		$token = $this->userService->getToken($token);
+		$token = $this->tokenService->getToken($plainToken);
 		if (!$token || !$token->isValid()) {
 			return $this->json(['detail' => 'Invalid token.'], 400);
 		}
@@ -149,13 +156,8 @@ final class AccountController extends AbstractController
 		return $this->json(['message' => 'Password reset successfully']);
 	}
 
-	private function sendVerificationEmail(User $user): void
+	private function sendVerificationEmail(User $user, string $plainToken): void
 	{
-		$token = $this->entityManager->getRepository(VerificationToken::class)
-			->findOneBy(['user' => $user]);
-		if (!$token) {
-			throw new InvalidArgumentException('Verification token not found for user');
-		}
 		$this->emailService->send(
 			from: 'aspire@aspireapp.online',
 			to: $user->getEmail(),
@@ -163,13 +165,13 @@ final class AccountController extends AbstractController
 			template: 'emails/verify_email.html.twig',
 			context: [
 				'current_user' => $user->getEmail(),
-				'verification_url' => $this->createUrl($this->discoveryService->getDiscoveryData()['frontend'], $token->token)
+				'verification_url' => $this->createUrl($this->discoveryService->getDiscoveryData()['frontend'], $plainToken)
 			]
 		);
 	}
 
-	private function createUrl(string $host, string $token): string
+	private function createUrl(string $host, string $plainToken): string
 	{
-		return sprintf('%s/confirm/%s', $host, $token);
+		return sprintf('%s/confirm/%s', $host, $plainToken);
 	}
 }
