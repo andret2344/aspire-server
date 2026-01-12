@@ -1,14 +1,15 @@
 FROM php:8.5-fpm-alpine
 
-RUN set -eux; \
-    apk add --no-cache \
-        nginx supervisor bash curl tzdata \
-        icu-libs libzip oniguruma; \
-    apk add --no-cache --virtual .build-deps \
-        $PHPIZE_DEPS \
-        icu-dev libzip-dev oniguruma-dev; \
-    docker-php-ext-install -j"$(nproc)" intl pdo_mysql opcache; \
-    apk del .build-deps
+RUN set -eux; apk add --no-cache nginx supervisor bash curl tzdata icu-libs libzip oniguruma
+
+RUN set -eux; apk add --no-cache --virtual .build-deps \
+    $PHPIZE_DEPS \
+    icu-dev libzip-dev oniguruma-dev \
+    linux-headers
+
+RUN set -eux; docker-php-ext-install -j"$(nproc)" intl pdo_mysql opcache
+
+RUN set -eux; apk del .build-deps
 
 RUN { \
   echo 'opcache.enable=1'; \

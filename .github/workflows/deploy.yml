@@ -97,6 +97,8 @@ jobs:
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
+        env:
+          BUILDKIT_PROGRESS: plain
         with:
           context: ./artifact
           file: ./artifact/Dockerfile
@@ -106,3 +108,5 @@ jobs:
           cache-to: type=gha,mode=max
           provenance: false
           sbom: false
+          pull: true
+          no-cache: true
