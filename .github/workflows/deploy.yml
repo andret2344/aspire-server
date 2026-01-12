@@ -5,76 +5,18 @@ on:
     tags: [ "v*" ]
 
 env:
-  PHP_VERSION: "8.5"
   IMAGE_NAME: ghcr.io/${{ github.repository }}
-  COMPOSER_CACHE_DIR: ~/.cache/composer
 
 permissions:
   contents: read
   packages: write
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: intl, pdo_mysql, zip
-          tools: composer:v2
-          coverage: none
-
-      - name: Cache Composer
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.COMPOSER_CACHE_DIR }}
-          key: composer-${{ hashFiles('**/composer.lock') }}
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Symfony cache warmup
-        run: php bin/console cache:clear
-
-      - name: Prepare artifact
-        run: |
-          rm -rf artifact
-          mkdir -p artifact
-          rsync -a \
-            --exclude=".git" \
-            --exclude=".github" \
-            --exclude=".idea" \
-            --exclude=".phpunit.cache" \
-            --exclude="tests" \
-            --exclude="artifact" \
-            --exclude=".env.local" \
-            ./ artifact/
-          rsync -a vendor/ artifact/vendor/
-          mkdir -p artifact/var && rsync -a var/cache/ artifact/var/cache/
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact
-          path: artifact/**
-          include-hidden-files: true
-          if-no-files-found: error
-
-  push:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-          path: artifact
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -83,10 +25,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
+      - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
-      - name: Compute docker tags
+      - name: Compute Docker tags
         id: tags
         run: |
           TAGS="${{ env.IMAGE_NAME }}:${{ github.ref_name }}"
@@ -97,11 +39,9 @@ jobs:
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
-        env:
-          BUILDKIT_PROGRESS: plain
         with:
-          context: ./artifact
-          file: ./artifact/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
@@ -109,4 +49,3 @@ jobs:
           provenance: false
           sbom: false
           pull: true
-          no-cache: true
