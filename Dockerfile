@@ -7,7 +7,9 @@ RUN set -eux; apk add --no-cache --virtual .build-deps \
     icu-dev libzip-dev oniguruma-dev \
     linux-headers
 
-RUN set -eux; docker-php-ext-install -j"$(nproc)" intl pdo_mysql opcache
+RUN set -eux; \
+    docker-php-ext-install -j1 intl; \
+    docker-php-ext-install -j"$(nproc)" pdo_mysql opcache
 
 RUN set -eux; apk del .build-deps
 
