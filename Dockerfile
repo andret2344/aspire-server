@@ -1,8 +1,14 @@
 FROM php:8.5-fpm-alpine
 
 RUN set -eux; \
-    apk add --no-cache nginx supervisor icu-dev libzip-dev oniguruma bash curl tzdata; \
-    docker-php-ext-install intl pdo pdo_mysql opcache
+    apk add --no-cache \
+        nginx supervisor bash curl tzdata \
+        icu-libs libzip oniguruma; \
+    apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        icu-dev libzip-dev oniguruma-dev; \
+    docker-php-ext-install -j"$(nproc)" intl pdo_mysql opcache; \
+    apk del .build-deps
 
 RUN { \
   echo 'opcache.enable=1'; \
@@ -14,7 +20,6 @@ RUN { \
 } > /usr/local/etc/php/conf.d/prod.ini
 
 WORKDIR /var/www/html
-
 COPY . /var/www/html/
 
 RUN set -eux; \
