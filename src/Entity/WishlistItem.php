@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use InvalidArgumentException;
 use JsonSerializable;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -15,111 +16,65 @@ class WishlistItem implements JsonSerializable
 	#[ORM\Id]
 	#[ORM\GeneratedValue]
 	#[ORM\Column(type: Types::INTEGER)]
-	private ?int $id = null;
+	private(set) ?int $id = null;
 
 	#[ORM\Column(type: Types::STRING, length: 255)]
 	#[Assert\NotBlank]
 	#[Assert\Length(max: 255)]
-	private string $name;
+	public string $name {
+		get => $this->name;
+		set {
+			$name = trim($value);
+			if (!$name || mb_strlen($name) > 255) {
+				throw new InvalidArgumentException('Name must be between 1 and 255 characters.');
+			}
+			$this->name = $name;
+		}
+	}
 
 	#[ORM\Column(type: Types::TEXT)]
-	private string $description;
+	public string $description {
+		get => $this->description;
+		set => $this->description = $value;
+	}
 
-	#[ORM\Column(type: Types::SMALLINT, options: ['default' => 1])]
-	#[Assert\Range(min: 1, max: 5)]
-	private int $priority;
+	#[ORM\Column(type: Types::SMALLINT, options: ['default' => 0])]
+	#[Assert\Range(min: 0, max: 3)]
+	public int $priority {
+		get => $this->priority;
+		set {
+			if ($value < 0 || $value > 3) {
+				throw new InvalidArgumentException('Priority must be between 0 and 3.');
+			}
+			$this->priority = $value;
+		}
+	}
 
 	#[ORM\ManyToOne(targetEntity: User::class)]
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-	private User $user;
+	private(set) User $user;
 
 	#[ORM\ManyToOne(targetEntity: Wishlist::class, inversedBy: 'items')]
 	#[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-	private Wishlist $wishlist;
+	public Wishlist $wishlist {
+		get => $this->wishlist;
+		set => $this->wishlist = $value;
+	}
 
 	#[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
-	private bool $hidden = false;
+	public bool $hidden = false {
+		get => $this->hidden;
+		set => $this->hidden = $value;
+	}
 
-	public function __construct(User $user, Wishlist $wishlist, string $name, string $description, int $priority = 1)
+	public function __construct(User $user, Wishlist $wishlist, string $name, string $description, int $priority = 0, bool $hidden = false)
 	{
 		$this->user = $user;
 		$this->wishlist = $wishlist;
 		$this->name = $name;
 		$this->description = $description;
 		$this->priority = $priority;
-	}
-
-	public function getId(): ?int
-	{
-		return $this->id;
-	}
-
-	public function __toString(): string
-	{
-		return $this->name;
-	}
-
-	public function getName(): string
-	{
-		return $this->name;
-	}
-
-	public function rename(string $name): void
-	{
-		$this->name = $name;
-	}
-
-	public function getDescription(): string
-	{
-		return $this->description;
-	}
-
-	public function changeDescription(string $text): void
-	{
-		$this->description = $text;
-	}
-
-	public function getPriority(): int
-	{
-		return $this->priority;
-	}
-
-	public function setPriority(int $priority): void
-	{
-		if ($priority < 1 || $priority > 5) {
-			throw new \InvalidArgumentException('Priority must be between 1 and 5.');
-		}
-		$this->priority = $priority;
-	}
-
-	public function isHidden(): bool
-	{
-		return $this->hidden;
-	}
-
-	public function hide(): void
-	{
-		$this->hidden = true;
-	}
-
-	public function unhide(): void
-	{
-		$this->hidden = false;
-	}
-
-	public function getUser(): User
-	{
-		return $this->user;
-	}
-
-	public function getWishlist(): Wishlist
-	{
-		return $this->wishlist;
-	}
-
-	public function attachTo(Wishlist $wishlist): void
-	{
-		$this->wishlist = $wishlist;
+		$this->hidden = $hidden;
 	}
 
 	public function jsonSerialize(): mixed

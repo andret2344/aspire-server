@@ -9,7 +9,7 @@ use App\Entity\VerificationToken;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-final class VerificationTokenRepository extends ServiceEntityRepository
+class VerificationTokenRepository extends ServiceEntityRepository
 {
 	public function __construct(ManagerRegistry $registry)
 	{

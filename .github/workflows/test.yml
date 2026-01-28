@@ -10,6 +10,7 @@ env:
   COMPOSER_CACHE_DIR: ~/.cache/composer
   APP_ENV: test
   APP_DEBUG: 0
+  COVERAGE_THRESHOLD: 70
 
 jobs:
   test:
@@ -24,7 +25,7 @@ jobs:
           php-version: ${{ env.PHP_VERSION }}
           extensions: intl, pdo_mysql, zip
           tools: composer:v2
-          coverage: none
+          coverage: xdebug
 
       - name: Cache Composer
         uses: actions/cache@v4
@@ -38,5 +39,29 @@ jobs:
       - name: Composer install
         run: composer install --no-interaction --prefer-dist
 
-      - name: PHPUnit
-        run: vendor/bin/phpunit --no-coverage
+      - name: PHPUnit with Coverage
+        run: vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+
+      - name: Check Coverage Threshold
+        run: |
+          COVERAGE=$(php -r "
+            \$xml = simplexml_load_file('coverage.xml');
+            \$metrics = \$xml->project->metrics;
+            \$statements = (int)\$metrics['statements'];
+            \$coveredstatements = (int)\$metrics['coveredstatements'];
+            echo round((\$coveredstatements / \$statements) * 100, 2);
+          ")
+          echo "Code Coverage: $COVERAGE%"
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+          if (( $(echo "$COVERAGE < ${{ env.COVERAGE_THRESHOLD }}" | bc -l) )); then
+            echo "Coverage is below ${{ env.COVERAGE_THRESHOLD }}%!"
+            exit 1
+          fi
+
+      - name: Coverage Summary
+        if: always()
+        run: |
+          echo "### Code Coverage Report :test_tube:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Coverage:** ${{ env.COVERAGE }}%" >> $GITHUB_STEP_SUMMARY
+          echo "**Threshold:** ${{ env.COVERAGE_THRESHOLD }}%" >> $GITHUB_STEP_SUMMARY

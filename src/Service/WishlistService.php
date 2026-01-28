@@ -32,7 +32,7 @@ final readonly class WishlistService
 	{
 		$wishList = new Wishlist($user, $name);
 		if ($accessCode !== null) {
-			$wishList->setAccessCodeRaw($accessCode);
+			$wishList->setAccessCode($accessCode);
 		}
 		$this->entityManager->persist($wishList);
 		$this->entityManager->flush();
@@ -46,13 +46,13 @@ final readonly class WishlistService
 			->findOneBy(['id' => $id, 'user' => $user, 'isDeleted' => null]);
 	}
 
-	public function update(Wishlist $wishList, ?string $name, bool $hasAccessCodeKey, ?string $accessCode): Wishlist
+	public function update(Wishlist $wishList, ?string $name, bool $hasAccessCodeKey, ?string $accessCode = null): Wishlist
 	{
 		if ($name !== null) {
 			$wishList->rename($name);
 		}
 		if ($hasAccessCodeKey) {
-			$wishList->setAccessCodeRaw($accessCode ?? '');
+			$wishList->setAccessCode($accessCode);
 		}
 		$this->entityManager->flush();
 
@@ -65,9 +65,9 @@ final readonly class WishlistService
 		$this->entityManager->flush();
 	}
 
-	public function setAccessCode(Wishlist $wishList, string $accessCode): void
+	public function setAccessCode(Wishlist $wishList, ?string $accessCode): void
 	{
-		$wishList->setAccessCodeRaw($accessCode);
+		$wishList->setAccessCode($accessCode);
 		$this->entityManager->flush();
 	}
 
