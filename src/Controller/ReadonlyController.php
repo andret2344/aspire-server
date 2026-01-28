@@ -40,7 +40,7 @@ final class ReadonlyController extends AbstractController
 	private function serializeReadonlyWishlist(Wishlist $wishlist): array
 	{
 		$visibleItems = $wishlist->getItems()
-			->filter(fn(WishlistItem $item) => !$item->isHidden());
+			->filter(fn(WishlistItem $item) => !$item->hidden);
 
 		return [
 			'id' => $wishlist->getId(),

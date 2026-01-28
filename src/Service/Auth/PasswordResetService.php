@@ -66,11 +66,12 @@ final readonly class PasswordResetService
 			throw new DomainException('Passwords do not match.');
 		}
 
+		/** @var User $user */
 		$user = $this->resetPasswordHelper->validateTokenAndFetchUser($dto->token);
 
 		$this->resetPasswordHelper->removeResetRequest($dto->token);
 
-		$user->setPlainPassword($dto->password);
+		$user->setPasswordHash($dto->password);
 		$this->entityManager->flush();
 
 		$this->emailService->send(

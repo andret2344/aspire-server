@@ -29,53 +29,35 @@ final readonly class WishlistItemService
 
 	public function create(User $user, Wishlist $wishList, string $name, string $description, int $priority, bool $hidden): WishlistItem
 	{
-		if ($name === '') {
-			throw new InvalidArgumentException('Field "name" is required');
-		}
-		if ($priority < 1 || $priority > 5) {
-			throw new InvalidArgumentException('priority must be between 1 and 5');
-		}
-		if ($hidden && !$wishList->hasPassword()) {
+		if ($hidden && !$wishList->getAccessCode()) {
 			throw new DomainException('Wishlist must have an access code to allow hidden items.');
 		}
 
-		$it = new WishlistItem($user, $wishList, $name, $description, $priority);
-		if ($hidden) {
-			$it->hide();
-		}
-
-		$this->entityManager->persist($it);
+		$item = new WishlistItem($user, $wishList, $name, $description, $priority, $hidden);
+		$this->entityManager->persist($item);
 		$this->entityManager->flush();
-
-		return $it;
+		return $item;
 	}
 
 	public function update(WishlistItem $item, Wishlist $wishList, ?string $name, ?string $description, ?int $priority, ?bool $hidden): WishlistItem
 	{
 		if ($name !== null) {
-			$name = trim($name);
-			if ($name === '') {
-				throw new InvalidArgumentException('Field "name" cannot be empty');
-			}
-			$item->rename($name);
+			$item->name = $name;
 		}
 
 		if ($description !== null) {
-			$item->changeDescription($description);
+			$item->description = $description;
 		}
 
 		if ($priority !== null) {
-			if ($priority < 1 || $priority > 5) {
-				throw new InvalidArgumentException('priority must be between 1 and 5');
-			}
-			$item->setPriority($priority);
+			$item->priority = $priority;
 		}
 
 		if ($hidden !== null) {
-			if ($hidden && !$wishList->hasPassword()) {
+			if ($hidden && !$wishList->getAccessCode()) {
 				throw new DomainException('Wishlist must have an access code to allow hidden items.');
 			}
-			$hidden ? $item->hide() : $item->unhide();
+			$item->hidden = $hidden;
 		}
 
 		$this->entityManager->flush();

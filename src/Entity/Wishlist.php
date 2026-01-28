@@ -109,8 +109,8 @@ class Wishlist implements JsonSerializable
 		}
 
 		$this->accessCode = null;
-		foreach ($this->items->filter(fn(WishlistItem $item) => $item->isHidden()) as $item) {
-			$item->unhide();
+		foreach ($this->items->filter(fn(WishlistItem $item) => $item->hidden) as $item) {
+			$item->hidden = false;
 		}
 	}
 
@@ -131,7 +131,7 @@ class Wishlist implements JsonSerializable
 	{
 		if (!$this->items->contains($item)) {
 			$this->items->add($item);
-			$item->attachTo($this);
+			$item->wishlist = $this;
 		}
 	}
 

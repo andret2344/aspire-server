@@ -7,7 +7,7 @@ namespace App\Service;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 
-final readonly class EmailService
+readonly class EmailService
 {
 	public function __construct(private MailerInterface $mailer) {}
 
