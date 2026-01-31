@@ -29,13 +29,16 @@ final readonly class UserService
 	{
 		$errors = $this->validator->validate($dto);
 		if ($errors->count() > 0) {
-			$codes = [];
+			$messages = [];
 			foreach ($errors as $error) {
 				if ($error->getCode() !== null) {
-					$codes[] = $error->getCode();
+					$messages[] = [
+						"field" => $error->getPropertyPath(),
+						"error" => $error->getMessage()
+					];
 				}
 			}
-			throw new InvalidArgumentException(implode(', ', $codes));
+			throw new InvalidArgumentException(json_encode($messages));
 		}
 
 		$repo = $this->entityManager->getRepository(User::class);

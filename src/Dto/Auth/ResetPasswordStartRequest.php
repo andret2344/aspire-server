@@ -8,12 +8,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final class ResetPasswordStartRequest
 {
-	#[Assert\NotBlank]
-	#[Assert\Email]
+	#[Assert\NotBlank(message: 'validation.email.blank')]
+	#[Assert\Email(message: 'validation.email.invalid')]
+	#[Assert\Length(max: 255, maxMessage: 'validation.email.max-length')]
 	public string $email;
 
-	#[Assert\NotBlank]
-	#[Assert\Url]
+	#[Assert\NotBlank(message: 'validation.url.blank')]
+	#[Assert\Url(message: 'validation.url.invalid')]
 	public string $url;
 
 	public static function fromArray(array $data): self

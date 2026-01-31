@@ -8,15 +8,15 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 final class ChangePasswordRequest
 {
-	#[Assert\NotBlank]
+	#[Assert\NotBlank(message: 'validation.old-password.blank')]
 	public string $oldPassword;
 
-	#[Assert\NotBlank]
-	#[Assert\Length(min: 8, max: 255)]
-	#[Assert\NotCompromisedPassword]
+	#[Assert\NotBlank(message: 'validation.password.blank')]
+	#[Assert\Length(min: 8, max: 255, minMessage: 'validation.password.min-length', maxMessage: 'validation.password.max-length')]
+	#[Assert\NotCompromisedPassword(message: 'validation.password.compromised')]
 	public string $password;
 
-	#[Assert\NotBlank]
+	#[Assert\NotBlank(message: 'validation.password-confirmation.blank')]
 	public string $passwordConfirmation;
 
 	public static function fromArray(array $data): self
