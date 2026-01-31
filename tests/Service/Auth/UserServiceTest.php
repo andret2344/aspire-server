@@ -151,7 +151,7 @@ class UserServiceTest extends TestCase
 		$service = new UserService($entityManager, $passwordHasher, $validator);
 
 		$this->expectException(DomainException::class);
-		$this->expectExceptionMessage('Email is already in use.');
+		$this->expectExceptionMessage('validation.email.used');
 
 		$service->register($dto);
 	}

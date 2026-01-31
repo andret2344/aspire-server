@@ -15,7 +15,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[UniqueEntity(fields: ['email'], message: 'Email is already in use.')]
+#[UniqueEntity(fields: ['email'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
 	#[ORM\Id]
@@ -27,6 +27,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 	#[Assert\NotBlank]
 	#[Assert\Email]
 	#[Assert\Length(max: 255)]
+	#[Assert\Unique(message: 'validation.email.used')]
 	private string $email;
 
 	#[ORM\Column(type: Types::STRING, length: 255)]

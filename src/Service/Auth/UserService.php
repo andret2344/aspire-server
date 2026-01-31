@@ -41,11 +41,6 @@ final readonly class UserService
 			throw new InvalidArgumentException(json_encode($messages));
 		}
 
-		$repo = $this->entityManager->getRepository(User::class);
-		if ($repo->findOneBy(['email' => $dto->email]) !== null) {
-			throw new DomainException('Email is already in use.');
-		}
-
 		$user = new User($dto->email);
 		$hash = $this->passwordHasher->hashPassword($user, $dto->password);
 		$user->setPasswordHash($hash);
