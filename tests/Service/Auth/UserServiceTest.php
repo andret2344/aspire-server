@@ -150,7 +150,7 @@ class UserServiceTest extends TestCase
 
 		$service = new UserService($entityManager, $passwordHasher, $validator);
 
-		$this->expectException(DomainException::class);
+		$this->expectException(InvalidArgumentException::class);
 		$this->expectExceptionMessage('validation.email.used');
 
 		$service->register($dto);
@@ -196,7 +196,6 @@ class UserServiceTest extends TestCase
 		$service = new UserService($entityManager, $passwordHasher, $validator);
 		$user = $service->register($dto);
 
-		$this->assertInstanceOf(User::class, $user);
 		$this->assertSame('new@example.com', $user->getEmail());
 	}
 

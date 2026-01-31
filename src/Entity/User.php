@@ -27,7 +27,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 	#[Assert\NotBlank]
 	#[Assert\Email]
 	#[Assert\Length(max: 255)]
-	#[Assert\Unique(message: 'validation.email.used')]
 	private string $email;
 
 	#[ORM\Column(type: Types::STRING, length: 255)]

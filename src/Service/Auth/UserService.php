@@ -41,6 +41,13 @@ final readonly class UserService
 			throw new InvalidArgumentException(json_encode($messages));
 		}
 
+		$existingUser = $this->entityManager->getRepository(User::class)
+			->findOneBy(['email' => $dto->email]);
+
+		if ($existingUser !== null) {
+			throw new InvalidArgumentException('validation.email.used');
+		}
+
 		$user = new User($dto->email);
 		$hash = $this->passwordHasher->hashPassword($user, $dto->password);
 		$user->setPasswordHash($hash);
