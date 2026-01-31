@@ -14,6 +14,7 @@ use DomainException;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -29,11 +30,28 @@ class UserServiceTest extends TestCase
 		$dto->email = 'invalid';
 		$dto->password = 'short';
 
-		$violations = $this->createMock(ConstraintViolationList::class);
-		$violations->method('count')
-			->willReturn(2);
-		$violations->method('__toString')
-			->willReturn('Validation error');
+		$violation1 = new ConstraintViolation(
+			'Invalid email',
+			null,
+			[],
+			$dto,
+			'email',
+			'invalid',
+			null,
+			'EMAIL_INVALID'
+		);
+		$violation2 = new ConstraintViolation(
+			'Password too short',
+			null,
+			[],
+			$dto,
+			'password',
+			'short',
+			null,
+			'PASSWORD_TOO_SHORT'
+		);
+
+		$violations = new ConstraintViolationList([$violation1, $violation2]);
 
 		$validator->expects($this->once())
 			->method('validate')
@@ -43,7 +61,53 @@ class UserServiceTest extends TestCase
 		$service = new UserService($entityManager, $passwordHasher, $validator);
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('Validation error');
+		$this->expectExceptionMessage('EMAIL_INVALID, PASSWORD_TOO_SHORT');
+
+		$service->register($dto);
+	}
+
+	public function testRegisterWithValidationErrorsWithoutCodes(): void
+	{
+		$entityManager = $this->createMock(EntityManagerInterface::class);
+		$passwordHasher = $this->createMock(UserPasswordHasherInterface::class);
+		$validator = $this->createMock(ValidatorInterface::class);
+
+		$dto = new RegisterUserRequest();
+		$dto->email = 'invalid';
+		$dto->password = 'short';
+
+		$violation1 = new ConstraintViolation(
+			'Invalid email',
+			null,
+			[],
+			$dto,
+			'email',
+			'invalid',
+			null,
+			'EMAIL_INVALID'
+		);
+		$violation2 = new ConstraintViolation(
+			'Password too short',
+			null,
+			[],
+			$dto,
+			'password',
+			'short',
+			null,
+			null  // No error code
+		);
+
+		$violations = new ConstraintViolationList([$violation1, $violation2]);
+
+		$validator->expects($this->once())
+			->method('validate')
+			->with($dto)
+			->willReturn($violations);
+
+		$service = new UserService($entityManager, $passwordHasher, $validator);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('EMAIL_INVALID');
 
 		$service->register($dto);
 	}

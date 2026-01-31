@@ -13,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use DomainException;
 use InvalidArgumentException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Validator\ConstraintViolationListInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use function count;
 
@@ -27,8 +28,14 @@ final readonly class UserService
 	public function register(RegisterUserRequest $dto): User
 	{
 		$errors = $this->validator->validate($dto);
-		if (count($errors) > 0) {
-			throw new InvalidArgumentException((string)$errors);
+		if ($errors->count() > 0) {
+			$codes = [];
+			foreach ($errors as $error) {
+				if ($error->getCode() !== null) {
+					$codes[] = $error->getCode();
+				}
+			}
+			throw new InvalidArgumentException(implode(', ', $codes));
 		}
 
 		$repo = $this->entityManager->getRepository(User::class);
