@@ -151,7 +151,9 @@ class UserServiceTest extends TestCase
 		$service = new UserService($entityManager, $passwordHasher, $validator);
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('validation.email.used');
+		$this->expectExceptionMessage(json_encode([
+			['field' => 'email', 'error' => 'validation.email.used']
+		]));
 
 		$service->register($dto);
 	}
@@ -188,7 +190,9 @@ class UserServiceTest extends TestCase
 
 		$entityManager->expects($this->once())
 			->method('persist')
-			->with($this->isInstanceOf(User::class));
+			->with($this->callback(function (User $user) {
+				return $user->getEmail() === 'new@example.com';
+			}));
 
 		$entityManager->expects($this->once())
 			->method('flush');
@@ -197,6 +201,43 @@ class UserServiceTest extends TestCase
 		$user = $service->register($dto);
 
 		$this->assertSame('new@example.com', $user->getEmail());
+	}
+
+	public function testRegisterWithEmailNormalization(): void
+	{
+		$entityManager = $this->createMock(EntityManagerInterface::class);
+		$passwordHasher = $this->createMock(UserPasswordHasherInterface::class);
+		$validator = $this->createMock(ValidatorInterface::class);
+		$repository = $this->createMock(EntityRepository::class);
+
+		$dto = new RegisterUserRequest();
+		$dto->email = '  UPPERCASE@Example.Com  ';
+		$dto->password = 'password123';
+
+		$normalizedEmail = 'uppercase@example.com';
+
+		$validator->expects($this->once())
+			->method('validate')
+			->willReturn(new ConstraintViolationList());
+
+		$entityManager->expects($this->once())
+			->method('getRepository')
+			->with(User::class)
+			->willReturn($repository);
+
+		$repository->expects($this->once())
+			->method('findOneBy')
+			->with(['email' => $normalizedEmail])
+			->willReturn(null);
+
+		$passwordHasher->expects($this->once())
+			->method('hashPassword')
+			->willReturn('$argon2id$hashed');
+
+		$service = new UserService($entityManager, $passwordHasher, $validator);
+		$user = $service->register($dto);
+
+		$this->assertSame($normalizedEmail, $user->getEmail());
 	}
 
 	public function testChangePasswordWithValidationErrors(): void

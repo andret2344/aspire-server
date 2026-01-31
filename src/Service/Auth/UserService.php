@@ -28,8 +28,8 @@ final readonly class UserService
 	public function register(RegisterUserRequest $dto): User
 	{
 		$errors = $this->validator->validate($dto);
+		$messages = [];
 		if ($errors->count() > 0) {
-			$messages = [];
 			foreach ($errors as $error) {
 				if ($error->getCode() !== null) {
 					$messages[] = [
@@ -38,17 +38,24 @@ final readonly class UserService
 					];
 				}
 			}
+		}
+
+		$normalizedEmail = mb_strtolower(trim($dto->email));
+		$existingUser = $this->entityManager->getRepository(User::class)
+			->findOneBy(['email' => $normalizedEmail]);
+
+		if ($existingUser !== null) {
+			$messages[] = [
+				"field" => 'email',
+				'error' => 'validation.email.used'
+			];
+		}
+
+		if (!empty($messages)) {
 			throw new InvalidArgumentException(json_encode($messages));
 		}
 
-		$existingUser = $this->entityManager->getRepository(User::class)
-			->findOneBy(['email' => $dto->email]);
-
-		if ($existingUser !== null) {
-			throw new InvalidArgumentException('validation.email.used');
-		}
-
-		$user = new User($dto->email);
+		$user = new User($normalizedEmail);
 		$hash = $this->passwordHasher->hashPassword($user, $dto->password);
 		$user->setPasswordHash($hash);
 
