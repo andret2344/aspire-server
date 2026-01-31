@@ -31,7 +31,7 @@ class UserServiceTest extends TestCase
 		$dto->password = 'short';
 
 		$violation1 = new ConstraintViolation(
-			'Invalid email',
+			'Invalid email format',
 			null,
 			[],
 			$dto,
@@ -41,7 +41,7 @@ class UserServiceTest extends TestCase
 			'EMAIL_INVALID'
 		);
 		$violation2 = new ConstraintViolation(
-			'Password too short',
+			'Password must be at least 8 characters',
 			null,
 			[],
 			$dto,
@@ -61,7 +61,11 @@ class UserServiceTest extends TestCase
 		$service = new UserService($entityManager, $passwordHasher, $validator);
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('EMAIL_INVALID, PASSWORD_TOO_SHORT');
+		$expectedJson = json_encode([
+			['field' => 'email', 'error' => 'Invalid email format'],
+			['field' => 'password', 'error' => 'Password must be at least 8 characters']
+		]);
+		$this->expectExceptionMessage($expectedJson);
 
 		$service->register($dto);
 	}
@@ -77,7 +81,7 @@ class UserServiceTest extends TestCase
 		$dto->password = 'short';
 
 		$violation1 = new ConstraintViolation(
-			'Invalid email',
+			'Invalid email format',
 			null,
 			[],
 			$dto,
@@ -94,7 +98,7 @@ class UserServiceTest extends TestCase
 			'password',
 			'short',
 			null,
-			null  // No error code
+			null  // No error code - this violation should be filtered out
 		);
 
 		$violations = new ConstraintViolationList([$violation1, $violation2]);
@@ -107,7 +111,11 @@ class UserServiceTest extends TestCase
 		$service = new UserService($entityManager, $passwordHasher, $validator);
 
 		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('EMAIL_INVALID');
+		// Only the violation with a code should be included
+		$expectedJson = json_encode([
+			['field' => 'email', 'error' => 'Invalid email format']
+		]);
+		$this->expectExceptionMessage($expectedJson);
 
 		$service->register($dto);
 	}
